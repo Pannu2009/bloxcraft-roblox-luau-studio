@@ -1,6 +1,0 @@
-{
-  "name": "BloxCraft AI - Roblox Luau Script & Module Studio",
-  "description": "AI-powered Roblox Luau studio for writing modules, real-time debugging, performance optimization, and automatic bug detection.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
