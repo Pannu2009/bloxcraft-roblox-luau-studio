@@ -1,0 +1,9 @@
+{
+  "appId": "com.bloxcraft.luau",
+  "appName": "BloxCraft AI",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
