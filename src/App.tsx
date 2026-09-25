@@ -626,7 +626,7 @@ export default function App() {
   // Empty workspace: no seed projects — clean start screen
   if (!activeProject) {
     return (
-      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
+      <div className="flex flex-col h-dvh w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
         <WelcomeScreen
           onNewProject={() => setIsNewProjectOpen(true)}
           onImportZip={handleImportProjectZip}
@@ -643,7 +643,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
+    <div className="flex flex-col h-dvh w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
       {/* Top Navbar */}
       <Navbar
         project={activeProject}

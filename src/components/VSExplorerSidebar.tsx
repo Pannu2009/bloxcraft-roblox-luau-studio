@@ -479,7 +479,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
 
       {/* AI Assistant Content */}
       {activeTab === 'assistant' && (
-        <div className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 p-3">
           <AIAssistantPanel activeFile={project.files.find((f) => f.id === activeFileId)} projectFiles={project.files} onApplyCode={onApplyAICode} />
         </div>
       )}

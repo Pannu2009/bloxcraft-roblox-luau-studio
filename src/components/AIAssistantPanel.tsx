@@ -204,7 +204,7 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, projectFiles, on
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
       <div className="flex items-center gap-2 px-1 pb-2">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-zinc-600 to-zinc-500 flex items-center justify-center shrink-0">
@@ -326,7 +326,7 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, projectFiles, on
       )}
 
       {/* Chat */}
-      <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-0.5">
         {messages.length === 0 && !showSettings && (
           <div className="text-center py-8 px-4">
             <Sparkles className="w-8 h-8 text-gray-600 mx-auto mb-2" />
