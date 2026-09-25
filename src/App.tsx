@@ -574,10 +574,8 @@ export default function App() {
             {mobileTab === 'console' && activeScript && (
               <div className="flex-1 flex flex-col min-w-0 h-full md:hidden">
                 <VirtualConsole
-                  code={activeScript.code}
-                  scriptType={activeScript.type}
-                  scriptName={activeScript.name}
-                  issues={combinedIssues}
+                  file={activeScript}
+                  files={activeProject.files}
                 />
               </div>
             )}
@@ -587,10 +585,8 @@ export default function App() {
           {isConsoleOpen && activeScript && (
             <div className="hidden md:block h-52 shrink-0 transition-all">
               <VirtualConsole
-                code={activeScript.code}
-                scriptType={activeScript.type}
-                scriptName={activeScript.name}
-                issues={combinedIssues}
+                file={activeScript}
+                files={activeProject.files}
               />
             </div>
           )}
