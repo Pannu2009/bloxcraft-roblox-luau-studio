@@ -3,10 +3,9 @@ import {
   FileCode,
   FolderTree,
   Bug,
-  Zap,
   Terminal,
-  Bot,
   Workflow,
+  SquareTerminal,
 } from 'lucide-react';
 import { MobileTab } from '../types/roblox';
 
@@ -14,33 +13,34 @@ interface Props {
   activeTab: MobileTab;
   onSelectTab: (tab: MobileTab) => void;
   issueCount: number;
+  onOpenCommands: () => void;
 }
 
-export const MobileBottomNav: React.FC<Props> = ({ activeTab, onSelectTab, issueCount }) => {
+export const MobileBottomNav: React.FC<Props> = ({ activeTab, onSelectTab, issueCount, onOpenCommands }) => {
   const items: Array<{
     id: MobileTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     badge?: number;
+    isCommands?: boolean;
   }> = [
     { id: 'editor', label: 'Editor', icon: FileCode },
     { id: 'explorer', label: 'Files', icon: FolderTree },
     { id: 'debugger', label: 'Bugs', icon: Bug, badge: issueCount },
-    { id: 'optimizer', label: 'Optimize', icon: Zap },
     { id: 'wiring', label: 'Wiring', icon: Workflow },
     { id: 'console', label: 'Output', icon: Terminal },
-    { id: 'copilot', label: 'AI Chat', icon: Bot },
+    { id: 'editor', label: 'Cmd', icon: SquareTerminal, isCommands: true },
   ];
 
   return (
     <nav className="md:hidden flex items-center justify-around bg-[#0a0c12] border-t border-[#1e2336] py-1 px-1 shrink-0 z-30 select-none">
-      {items.map((item) => {
+      {items.map((item, idx) => {
         const Icon = item.icon;
-        const isActive = activeTab === item.id;
+        const isActive = !item.isCommands && activeTab === item.id;
         return (
           <button
-            key={item.id}
-            onClick={() => onSelectTab(item.id)}
+            key={`${item.id}-${idx}`}
+            onClick={() => (item.isCommands ? onOpenCommands() : onSelectTab(item.id))}
             className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-colors flex-1 ${
               isActive ? 'text-red-400 font-bold' : 'text-gray-400 hover:text-gray-200'
             }`}

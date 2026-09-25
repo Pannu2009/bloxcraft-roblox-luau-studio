@@ -4,8 +4,79 @@
 // tells Ustaad the code once in chat; every project bundle shared afterwards
 // carries it, so Ustaad can verify the bundle really came from this install.
 
-import type { RobloxProject } from '../types/roblox';
+import type { RobloxProject, ScriptFile, ScriptType } from '../types/roblox';
 import { buildDependencyGraph } from './dependencyGraph';
+
+// ---------------------------------------------------------------------------
+// Bundle parsing (Ustaad -> app): paste a bundle Ustaad sent back and the app
+// applies the file updates/creations it contains.
+// ---------------------------------------------------------------------------
+
+export interface BundleFile {
+  path: string; // folder/name.luau
+  folder: string;
+  name: string;
+  type: ScriptType;
+  code: string;
+}
+
+export interface ParsedBundle {
+  projectName: string;
+  pairingCode: string | null;
+  files: BundleFile[];
+}
+
+/** Parse a BloxCraft project bundle (the same format buildProjectBundle emits). */
+export function parseProjectBundle(text: string): ParsedBundle {
+  const lines = text.split('\n');
+  let projectName = 'Bundle';
+  let pairingCode: string | null = null;
+  const files: BundleFile[] = [];
+
+  for (const line of lines) {
+    const pm = line.match(/^# Project:\s*(.+)$/);
+    if (pm) projectName = pm[1].trim();
+    const cm = line.match(/^# Pairing code:\s*(BX-[A-Z0-9-]+)/i);
+    if (cm) pairingCode = cm[1].toUpperCase();
+  }
+
+  const fileRe = /^### FILE:\s*(.+?)\s*\[([^\]]+)\]\s*$/;
+  let i = 0;
+  while (i < lines.length) {
+    const m = lines[i].match(fileRe);
+    if (m) {
+      const rawPath = m[1].trim();
+      const typeStr = m[2].trim();
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) i++;
+      if (i >= lines.length) break;
+      i++; // skip opening fence
+      const codeLines: string[] = [];
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      const type: ScriptType =
+        typeStr === 'ServerScript' || typeStr === 'LocalScript' ? typeStr : 'ModuleScript';
+      const slash = rawPath.lastIndexOf('/');
+      files.push({
+        path: rawPath,
+        folder: slash >= 0 ? rawPath.slice(0, slash) : 'src',
+        name: slash >= 0 ? rawPath.slice(slash + 1) : rawPath,
+        type,
+        code: codeLines.join('\n'),
+      });
+    }
+    i++;
+  }
+
+  return { projectName, pairingCode, files };
+}
+
+/** True when the bundle's pairing code matches this install's code. */
+export function bundleMatchesThisApp(bundle: ParsedBundle): boolean {
+  return !!bundle.pairingCode && bundle.pairingCode === getPairingCode();
+}
 
 const CODE_KEY = 'bloxcraft_muse_pairing_code';
 const INTRODUCED_KEY = 'bloxcraft_muse_introduced';

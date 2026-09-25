@@ -4,20 +4,27 @@ import { VSActivityBar } from './components/VSActivityBar';
 import { VSExplorerSidebar } from './components/VSExplorerSidebar';
 import { CodeEditor } from './components/CodeEditor';
 import { DebuggerPanel } from './components/DebuggerPanel';
-import { OptimizerPanel } from './components/OptimizerPanel';
-import { GeneratorModal } from './components/GeneratorModal';
 import { RobloxStudioGuideModal } from './components/RobloxStudioGuideModal';
-import { RobloxCoPilot } from './components/RobloxCoPilot';
 import { VirtualConsole } from './components/VirtualConsole';
 import { NewProjectModal } from './components/NewProjectModal';
 import { NewFileModal } from './components/NewFileModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { WiringDiagram } from './components/WiringDiagram';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { CommandPanel, type Command } from './components/CommandPanel';
+import { GitHubConnectModal } from './components/GitHubConnectModal';
+import {
+  loadGitHubConfig,
+  saveGitHubConfig,
+  clearGitHubConfig,
+  pushProjectToGitHub,
+  pullProjectFromGitHub,
+  type GitHubConfig,
+} from './utils/githubSync';
 import { runInstantRobloxLint } from './utils/robloxLinter';
 import { exportProjectAsZip } from './utils/projectZipExport';
-import { analyzeCode, fixCode, optimizeCode } from './utils/geminiClient';
+import { importProjectFromZip } from './utils/projectZipImport';
 import {
-  INITIAL_PROJECT,
   PROJECT_TEMPLATES,
 } from './data/projectTemplates';
 import {
@@ -25,9 +32,6 @@ import {
   ScriptFile,
   ScriptType,
   RobloxIssue,
-  AnalysisResult,
-  OptimizationResult,
-  FixResult,
   SidebarTab,
   MobileTab,
   ProjectTemplateId,
@@ -37,7 +41,7 @@ const STORAGE_PROJECTS_KEY = 'bloxcraft_ai_projects_v2';
 const STORAGE_ACTIVE_PROJECT_KEY = 'bloxcraft_ai_active_project_v2';
 
 export default function App() {
-  // 1. Projects State (Loaded from localStorage or initialized with defaults)
+  // 1. Projects State (Loaded from localStorage; starts empty — no seed projects)
   const [projects, setProjects] = useState<RobloxProject[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_PROJECTS_KEY);
@@ -48,19 +52,7 @@ export default function App() {
     } catch (e) {
       console.error('Failed to load projects from storage:', e);
     }
-
-    // Default with RPG Combat and Tycoon
-    const secondTemplate = PROJECT_TEMPLATES.find((t) => t.id === 'tycoon')!;
-    const secondProject: RobloxProject = {
-      id: 'proj-tycoon-default',
-      name: 'Roblox Tycoon Framework',
-      description: secondTemplate.description,
-      template: 'tycoon',
-      createdAt: Date.now() - 3600000,
-      updatedAt: Date.now() - 3600000,
-      files: secondTemplate.defaultFiles,
-    };
-    return [INITIAL_PROJECT, secondProject];
+    return [];
   });
 
   const [activeProjectId, setActiveProjectId] = useState<string>(() => {
@@ -68,21 +60,22 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_ACTIVE_PROJECT_KEY);
       if (saved) return saved;
     } catch (e) {}
-    return INITIAL_PROJECT.id;
+    return '';
   });
 
-  // Current active project
+  // Current active project (may be undefined when the workspace is empty)
   const activeProject = useMemo(() => {
     return projects.find((p) => p.id === activeProjectId) || projects[0];
   }, [projects, activeProjectId]);
 
   // Active script file within active project
   const [activeFileId, setActiveFileId] = useState<string>(() => {
-    return activeProject.files[0]?.id || '';
+    return activeProject?.files[0]?.id || '';
   });
 
   // Keep activeFileId valid if project changes
   useEffect(() => {
+    if (!activeProject) return;
     if (!activeProject.files.some((f) => f.id === activeFileId)) {
       setActiveFileId(activeProject.files[0]?.id || '');
     }
@@ -99,13 +92,14 @@ export default function App() {
   }, [projects, activeProjectId]);
 
   const activeScript = useMemo(() => {
+    if (!activeProject) return undefined;
     return activeProject.files.find((f) => f.id === activeFileId) || activeProject.files[0];
-  }, [activeProject.files, activeFileId]);
+  }, [activeProject?.files, activeFileId]);
 
   // 2. UI Layout State (VS Code + Mobile)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('explorer');
-  const [activeView, setActiveView] = useState<'editor' | 'optimizer' | 'wiring'>('editor');
+  const [activeView, setActiveView] = useState<'editor' | 'wiring'>('editor');
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const [editorFontSize, setEditorFontSize] = useState<number>(13);
 
@@ -113,20 +107,37 @@ export default function App() {
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [isNewFileOpen, setIsNewFileOpen] = useState(false);
   const [newFileDefaultFolder, setNewFileDefaultFolder] = useState<string>('src/shared');
-  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [isCoPilotOpen, setIsCoPilotOpen] = useState(false);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
 
-  // Analysis and Optimization states per script
-  const [analysisResults, setAnalysisResults] = useState<Record<string, AnalysisResult>>({});
-  const [optimizationResults, setOptimizationResults] = useState<Record<string, OptimizationResult>>({});
-  const [fixResults, setFixResults] = useState<Record<string, FixResult>>({});
+  // Command panel + GitHub sync + toast
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [githubModalOpen, setGithubModalOpen] = useState(false);
+  const [githubCfg, setGithubCfg] = useState<GitHubConfig | null>(null);
+  const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null);
+  const cmdZipRef = React.useRef<HTMLInputElement>(null);
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isFixing, setIsFixing] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [debuggerError, setDebuggerError] = useState<string | null>(null);
+  const showToast = (msg: string, kind: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, kind });
+    window.setTimeout(() => setToast(null), 4500);
+  };
+
+  // Load this project's GitHub link whenever the active project changes
+  useEffect(() => {
+    setGithubCfg(activeProject ? loadGitHubConfig(activeProject.id) : null);
+  }, [activeProject?.id]);
+
+  // Ctrl/Cmd+Shift+P toggles the command panel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setCommandOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   // 3. Real-Time Roblox Luau Static Linter
   const instantIssues = useMemo(() => {
@@ -134,27 +145,19 @@ export default function App() {
     return runInstantRobloxLint(activeScript.code, activeScript.type);
   }, [activeScript?.code, activeScript?.type]);
 
-  // Combine instant lint issues with deep AI issues
+  // Static linter issues for the active script
   const combinedIssues: RobloxIssue[] = useMemo(() => {
-    const deepIssues = (activeScript && analysisResults[activeScript.id]?.issues) || [];
     const issueMap = new Map<string, RobloxIssue>();
 
     instantIssues.forEach((issue) => {
       issueMap.set(`${issue.line}-${issue.title}`, issue);
     });
 
-    deepIssues.forEach((issue) => {
-      const key = `${issue.line}-${issue.title}`;
-      if (!issueMap.has(key)) {
-        issueMap.set(key, issue);
-      }
-    });
-
     return Array.from(issueMap.values()).sort((a, b) => {
       const order = { critical: 0, security: 1, warning: 2, optimization: 3, style: 4 };
       return (order[a.severity] ?? 5) - (order[b.severity] ?? 5);
     });
-  }, [instantIssues, analysisResults, activeScript?.id]);
+  }, [instantIssues]);
 
   // 4. Code & Project Modification Handlers
   const handleCodeChange = (newCode: string) => {
@@ -209,14 +212,69 @@ export default function App() {
     setIsSidebarOpen(true);
   };
 
-  // Delete project
+  // Delete project (workspace may become empty)
   const handleDeleteProject = (projectId: string) => {
-    if (projects.length <= 1) return;
     const nextProjects = projects.filter((p) => p.id !== projectId);
     setProjects(nextProjects);
     if (activeProjectId === projectId) {
-      setActiveProjectId(nextProjects[0].id);
-      setActiveFileId(nextProjects[0].files[0]?.id || '');
+      const next = nextProjects[0];
+      setActiveProjectId(next?.id || '');
+      setActiveFileId(next?.files[0]?.id || '');
+    }
+  };
+
+  // Apply a bundle of files Ustaad sent back (updates matching files, creates new ones)
+  const handleApplyUstaadBundle = (bundleFiles: import('./utils/museLink').BundleFile[]) => {
+    if (!activeProject) return;
+    const now = Date.now();
+    setProjects((prev) =>
+      prev.map((proj) => {
+        if (proj.id !== activeProject.id) return proj;
+        const files = [...proj.files];
+        bundleFiles.forEach((bf, i) => {
+          const idx = files.findIndex(
+            (f) => (f.folder || 'src') === bf.folder && f.name === bf.name
+          );
+          const suggestedPlacement =
+            bf.type === 'ServerScript'
+              ? 'ServerScriptService'
+              : bf.type === 'LocalScript'
+              ? 'StarterPlayerScripts'
+              : 'ReplicatedStorage';
+          if (idx >= 0) {
+            files[idx] = { ...files[idx], code: bf.code, type: bf.type };
+          } else {
+            files.push({
+              id: `f-ustaad-${now}-${i}`,
+              name: bf.name,
+              type: bf.type,
+              folder: bf.folder,
+              code: bf.code,
+              suggestedPlacement,
+            });
+          }
+        });
+        return { ...proj, files, updatedAt: now };
+      })
+    );
+  };
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleImportProjectZip = async (zipFile: File) => {
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const proj = await importProjectFromZip(zipFile);
+      setProjects((prev) => [proj, ...prev]);
+      setActiveProjectId(proj.id);
+      setActiveFileId(proj.files[0]?.id || '');
+      setActiveSidebarTab('explorer');
+      setIsSidebarOpen(true);
+    } catch (e: any) {
+      setImportError(e?.message || 'Could not import that ZIP file.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -289,84 +347,7 @@ export default function App() {
     }
   };
 
-  // Insert generated script
-  const handleInsertGenerated = (genData: {
-    name: string;
-    type: ScriptType;
-    code: string;
-    suggestedPlacement: string;
-  }) => {
-    const folder =
-      genData.type === 'ServerScript'
-        ? 'src/server'
-        : genData.type === 'LocalScript'
-        ? 'src/client'
-        : 'src/shared';
-
-    handleAddFile({
-      name: genData.name,
-      type: genData.type,
-      folder,
-      code: genData.code,
-    });
-  };
-
-  // 5. AI Actions (Analyze, Auto-Fix, Optimize)
-  const handleRunDeepAnalysis = async () => {
-    if (!activeScript) return;
-    setIsAnalyzing(true);
-    setDebuggerError(null);
-
-    try {
-      const data: AnalysisResult = await analyzeCode(
-        activeScript.code,
-        activeScript.type,
-        `Project: ${activeProject.name}, Placement: ${activeScript.suggestedPlacement}`
-      );
-      setAnalysisResults((prev) => ({ ...prev, [activeScript.id]: data }));
-    } catch (err: any) {
-      console.error(err);
-      setDebuggerError(err.message || 'Analysis temporarily unavailable. Please retry.');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleAutoFix = async (instruction?: string) => {
-    if (!activeScript) return;
-    setIsFixing(true);
-    setDebuggerError(null);
-
-    try {
-      const data: FixResult = await fixCode(
-        activeScript.code,
-        activeScript.type,
-        instruction || 'Fix all detected bugs, deprecations, and potential runtime errors'
-      );
-      setFixResults((prev) => ({ ...prev, [activeScript.id]: data }));
-      handleCodeChange(data.fixedCode);
-    } catch (err: any) {
-      console.error(err);
-      setDebuggerError(err.message || 'Auto-fix request failed. Please retry.');
-    } finally {
-      setIsFixing(false);
-    }
-  };
-
-  const handleRunOptimization = async (goal: string) => {
-    if (!activeScript) return;
-    setIsOptimizing(true);
-
-    try {
-      const data: OptimizationResult = await optimizeCode(activeScript.code, activeScript.type, goal);
-      setOptimizationResults((prev) => ({ ...prev, [activeScript.id]: data }));
-    } catch (err: any) {
-      console.error(err);
-    } finally {
-      setIsOptimizing(false);
-    }
-  };
-
+  // Apply a local quick-fix for a linter issue (no AI)
   const handleApplySingleFix = (issue: RobloxIssue) => {
     if (!issue.suggestedFix || !activeScript) return;
     if (issue.title.includes('Missing "return Module"')) {
@@ -377,7 +358,6 @@ export default function App() {
       handleCodeChange(`--!strict\n${activeScript.code}`);
       return;
     }
-    handleAutoFix(`Fix this specific issue: ${issue.title} - ${issue.description}`);
   };
 
   // Quick Run simulation: opens output console
@@ -385,6 +365,151 @@ export default function App() {
     setIsConsoleOpen(true);
     setMobileTab('console');
   };
+
+  // ---- Command panel ----
+  const commands: Command[] = [
+    { id: 'new-project', title: 'New Project', group: 'Project', hint: 'start blank' },
+    { id: 'import-zip', title: 'Import Project from ZIP', group: 'Project', hint: '.zip' },
+    { id: 'export-zip', title: 'Export Project as ZIP', group: 'Project', hint: 'rojo' },
+    {
+      id: 'github-connect',
+      title: githubCfg ? `GitHub: Reconnect (${githubCfg.owner}/${githubCfg.repo})` : 'GitHub: Connect Repository',
+      group: 'GitHub',
+    },
+    { id: 'github-push', title: 'GitHub: Push / Sync to GitHub', group: 'GitHub', hint: githubCfg ? `${githubCfg.owner}/${githubCfg.repo}:${githubCfg.branch}` : 'not connected' },
+    { id: 'github-pull', title: 'GitHub: Pull from GitHub', group: 'GitHub', hint: githubCfg ? `${githubCfg.owner}/${githubCfg.repo}:${githubCfg.branch}` : 'not connected' },
+    { id: 'run', title: 'Run Project', group: 'Run', hint: 'console' },
+    { id: 'goto-editor', title: 'Go to: Editor', group: 'Go to' },
+    { id: 'goto-wiring', title: 'Go to: Wiring', group: 'Go to' },
+    { id: 'goto-files', title: 'Go to: Files', group: 'Go to' },
+    { id: 'goto-bugs', title: 'Go to: Bugs', group: 'Go to' },
+    { id: 'goto-output', title: 'Go to: Output', group: 'Go to' },
+    { id: 'send-ustaad', title: 'Send Project to Ustaad', group: 'Ustaad' },
+  ];
+
+  const handleGitHubPush = async () => {
+    if (!githubCfg) {
+      setGithubModalOpen(true);
+      return;
+    }
+    showToast('Pushing to GitHub…');
+    try {
+      const sha = await pushProjectToGitHub(activeProject, githubCfg);
+      showToast(`Pushed to ${githubCfg.owner}/${githubCfg.repo} (${sha.slice(0, 7)})`);
+    } catch (e: any) {
+      showToast(e?.message || 'Push failed.', 'err');
+    }
+  };
+
+  const handleGitHubPull = async () => {
+    if (!githubCfg) {
+      setGithubModalOpen(true);
+      return;
+    }
+    showToast('Pulling from GitHub…');
+    try {
+      const pulled = await pullProjectFromGitHub(githubCfg);
+      const ok = window.confirm(
+        `Replace this project's files with ${pulled.length} script(s) from ${githubCfg.owner}/${githubCfg.repo}? This cannot be undone.`
+      );
+      if (!ok) return;
+      const now = Date.now();
+      setProjects((prev) =>
+        prev.map((proj) => {
+          if (proj.id !== activeProject.id) return proj;
+          return {
+            ...proj,
+            updatedAt: now,
+            files: pulled.map((pf, i) => {
+              const type = /server/i.test(pf.folder) ? 'ServerScript' : /client/i.test(pf.folder) ? 'LocalScript' : 'ModuleScript';
+              return {
+                id: `f-pull-${now}-${i}`,
+                name: pf.name,
+                type,
+                folder: pf.folder,
+                code: pf.code,
+                suggestedPlacement:
+                  type === 'ServerScript' ? 'ServerScriptService' : type === 'LocalScript' ? 'StarterPlayerScripts' : 'ReplicatedStorage',
+              };
+            }),
+          };
+        })
+      );
+      showToast(`Pulled ${pulled.length} script(s) from GitHub.`);
+    } catch (e: any) {
+      showToast(e?.message || 'Pull failed.', 'err');
+    }
+  };
+
+  const runCommand = (id: string) => {
+    switch (id) {
+      case 'new-project':
+        setIsNewProjectOpen(true);
+        break;
+      case 'import-zip':
+        cmdZipRef.current?.click();
+        break;
+      case 'export-zip':
+        handleExportProjectZip();
+        break;
+      case 'github-connect':
+        setGithubModalOpen(true);
+        break;
+      case 'github-push':
+        handleGitHubPush();
+        break;
+      case 'github-pull':
+        handleGitHubPull();
+        break;
+      case 'run':
+        handleQuickRun();
+        break;
+      case 'goto-editor':
+        setActiveView('editor');
+        setMobileTab('editor');
+        break;
+      case 'goto-wiring':
+        setActiveView('wiring');
+        setMobileTab('wiring');
+        break;
+      case 'goto-files':
+        setActiveSidebarTab('explorer');
+        setIsSidebarOpen(true);
+        setMobileTab('explorer');
+        break;
+      case 'goto-bugs':
+        setActiveView('editor');
+        setMobileTab('debugger');
+        break;
+      case 'goto-output':
+        setIsConsoleOpen(true);
+        setMobileTab('console');
+        break;
+      case 'send-ustaad':
+        setActiveSidebarTab('settings');
+        setIsSidebarOpen(true);
+        break;
+    }
+  };
+
+  // Empty workspace: no seed projects — clean start screen
+  if (!activeProject) {
+    return (
+      <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
+        <WelcomeScreen
+          onNewProject={() => setIsNewProjectOpen(true)}
+          onImportZip={handleImportProjectZip}
+          isImporting={isImporting}
+          importError={importError}
+        />
+        <NewProjectModal
+          isOpen={isNewProjectOpen}
+          onClose={() => setIsNewProjectOpen(false)}
+          onCreateProject={handleCreateNewProject}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0c0d12] text-gray-100 font-sans select-none">
@@ -406,10 +531,9 @@ export default function App() {
           setMobileTab('editor');
         }}
         onCloseScript={handleCloseScript}
-        onOpenGenerator={() => setIsGeneratorOpen(true)}
         onOpenGuide={() => setIsGuideOpen(true)}
-        onToggleCoPilot={() => setIsCoPilotOpen(!isCoPilotOpen)}
         onToggleConsole={() => setIsConsoleOpen(!isConsoleOpen)}
+        onOpenCommands={() => setCommandOpen(true)}
         isConsoleOpen={isConsoleOpen}
         activeView={activeView}
         onSelectView={setActiveView}
@@ -427,8 +551,6 @@ export default function App() {
               setActiveSidebarTab(tab);
               setIsSidebarOpen(true);
               if (tab === 'debugger') setActiveView('editor');
-              if (tab === 'optimizer') setActiveView('optimizer');
-              if (tab === 'copilot') setIsCoPilotOpen(true);
             }}
             issueCount={combinedIssues.length}
             isOpen={isSidebarOpen}
@@ -461,6 +583,8 @@ export default function App() {
               onCreateNewProject={() => setIsNewProjectOpen(true)}
               onDeleteProject={handleDeleteProject}
               onExportProjectZip={handleExportProjectZip}
+              onImportProjectZip={handleImportProjectZip}
+              onApplyBundle={handleApplyUstaadBundle}
               onAddFile={(folder) => {
                 setNewFileDefaultFolder(folder || 'src/shared');
                 setIsNewFileOpen(true);
@@ -494,7 +618,7 @@ export default function App() {
             <div
               className={`flex-1 flex flex-col min-w-0 h-full ${
                 mobileTab === 'editor' ? 'flex' : 'hidden md:flex'
-              } ${activeView === 'optimizer' ? 'hidden' : ''}`}
+              }`}
             >
               {activeScript && (
                 <CodeEditor
@@ -504,13 +628,10 @@ export default function App() {
                   scriptName={activeScript.name}
                   folder={activeScript.folder || 'src'}
                   issues={combinedIssues}
-                  isAnalyzing={isAnalyzing}
                   fontSize={editorFontSize}
                   onIncreaseFont={() => setEditorFontSize((prev) => Math.min(prev + 1, 22))}
                   onDecreaseFont={() => setEditorFontSize((prev) => Math.max(prev - 1, 10))}
                   onQuickRun={handleQuickRun}
-                  onQuickFix={() => handleAutoFix()}
-                  isFixing={isFixing}
                 />
               )}
             </div>
@@ -524,34 +645,8 @@ export default function App() {
               >
                 <DebuggerPanel
                   issues={combinedIssues}
-                  analysisResult={analysisResults[activeScript?.id || ''] || null}
-                  isAnalyzing={isAnalyzing}
-                  isFixing={isFixing}
-                  errorMessage={debuggerError}
-                  onClearError={() => setDebuggerError(null)}
-                  onRunDeepAnalysis={handleRunDeepAnalysis}
-                  onAutoFix={handleAutoFix}
                   onApplySingleFix={handleApplySingleFix}
-                  lastFixResult={fixResults[activeScript?.id || ''] || null}
                   scriptType={activeScript?.type || 'ModuleScript'}
-                />
-              </div>
-            )}
-
-            {/* Luau Optimizer View (Shown when activeView is 'optimizer' or mobileTab is 'optimizer') */}
-            {(activeView === 'optimizer' || mobileTab === 'optimizer') && activeScript && (
-              <div className="flex-1 flex flex-col min-w-0 h-full">
-                <OptimizerPanel
-                  code={activeScript.code}
-                  scriptType={activeScript.type}
-                  optimizationResult={optimizationResults[activeScript.id] || null}
-                  isOptimizing={isOptimizing}
-                  onRunOptimization={handleRunOptimization}
-                  onApplyOptimizedCode={(newCode) => {
-                    handleCodeChange(newCode);
-                    setActiveView('editor');
-                    setMobileTab('editor');
-                  }}
                 />
               </div>
             )}
@@ -605,10 +700,6 @@ export default function App() {
           if (tab === 'explorer') {
             setActiveSidebarTab('explorer');
             setIsSidebarOpen(true);
-          } else if (tab === 'copilot') {
-            setIsCoPilotOpen(true);
-          } else if (tab === 'optimizer') {
-            setActiveView('optimizer');
           } else if (tab === 'wiring') {
             setActiveView('wiring');
           } else if (tab === 'editor' || tab === 'debugger') {
@@ -616,6 +707,7 @@ export default function App() {
           }
         }}
         issueCount={combinedIssues.length}
+        onOpenCommands={() => setCommandOpen(true)}
       />
 
       {/* Modals & Slide-ins */}
@@ -632,12 +724,6 @@ export default function App() {
         onAddFile={handleAddFile}
       />
 
-      <GeneratorModal
-        isOpen={isGeneratorOpen}
-        onClose={() => setIsGeneratorOpen(false)}
-        onAddScript={handleInsertGenerated}
-      />
-
       <RobloxStudioGuideModal
         isOpen={isGuideOpen}
         onClose={() => setIsGuideOpen(false)}
@@ -645,13 +731,57 @@ export default function App() {
         currentScriptName={activeScript?.name || ''}
       />
 
-      <RobloxCoPilot
-        isOpen={isCoPilotOpen}
-        onClose={() => setIsCoPilotOpen(false)}
-        currentCode={activeScript?.code || ''}
-        scriptType={activeScript?.type || 'ModuleScript'}
-        scriptName={activeScript?.name || ''}
+      {/* Command panel (Ctrl+Shift+P) */}
+      <CommandPanel
+        isOpen={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        commands={commands}
+        onRun={runCommand}
       />
+
+      {/* GitHub connect */}
+      <GitHubConnectModal
+        isOpen={githubModalOpen}
+        onClose={() => setGithubModalOpen(false)}
+        projectName={activeProject.name}
+        existing={githubCfg}
+        onSave={(cfg) => {
+          saveGitHubConfig(activeProject.id, cfg);
+          setGithubCfg(cfg);
+          showToast(`Connected to ${cfg.owner}/${cfg.repo}:${cfg.branch}`);
+        }}
+        onDisconnect={() => {
+          clearGitHubConfig(activeProject.id);
+          setGithubCfg(null);
+          showToast('GitHub repo disconnected.');
+        }}
+      />
+
+      {/* Hidden ZIP picker for the command panel */}
+      <input
+        ref={cmdZipRef}
+        type="file"
+        accept=".zip,application/zip"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleImportProjectZip(f);
+          e.target.value = '';
+        }}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl border max-w-[90vw] text-center ${
+            toast.kind === 'ok'
+              ? 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200'
+              : 'bg-red-950/95 border-red-500/40 text-red-200'
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
     </div>
   );
 }

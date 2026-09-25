@@ -3,8 +3,6 @@ import {
   FolderTree,
   Search,
   Bug,
-  Zap,
-  Bot,
   FolderKanban,
   Settings,
   Plus,
@@ -37,8 +35,6 @@ export const VSActivityBar: React.FC<Props> = ({
     { id: 'explorer', label: 'Explorer (Files & Rojo Folders)', icon: FolderTree },
     { id: 'projects', label: 'Projects & Templates', icon: FolderKanban },
     { id: 'debugger', label: 'Roblox Luau Debugger & Bugs', icon: Bug, badge: issueCount },
-    { id: 'optimizer', label: 'Luau Code Optimizer', icon: Zap },
-    { id: 'copilot', label: 'Roblox AI Co-Pilot', icon: Bot, color: 'text-cyan-400' },
   ];
 
   return (

@@ -3,51 +3,26 @@ import {
   AlertCircle,
   AlertTriangle,
   ShieldAlert,
-  Zap,
   CheckCircle2,
-  Wrench,
-  Sparkles,
-  ArrowRight,
   Info,
   Bug,
-  RefreshCw,
 } from 'lucide-react';
-import { RobloxIssue, AnalysisResult, ScriptType, FixResult } from '../types/roblox';
+import { RobloxIssue, ScriptType } from '../types/roblox';
 
 interface Props {
   issues: RobloxIssue[];
-  analysisResult: AnalysisResult | null;
-  isAnalyzing: boolean;
-  isFixing: boolean;
-  errorMessage?: string | null;
-  onClearError?: () => void;
-  onRunDeepAnalysis: () => void;
-  onAutoFix: (instruction?: string) => void;
   onApplySingleFix?: (issue: RobloxIssue) => void;
-  lastFixResult: FixResult | null;
   scriptType: ScriptType;
 }
 
 export const DebuggerPanel: React.FC<Props> = ({
   issues,
-  analysisResult,
-  isAnalyzing,
-  isFixing,
-  errorMessage,
-  onClearError,
-  onRunDeepAnalysis,
-  onAutoFix,
   onApplySingleFix,
-  lastFixResult,
   scriptType,
 }) => {
   const [filter, setFilter] = useState<'all' | 'critical' | 'security' | 'warning' | 'optimization'>('all');
-  const [customFixPrompt, setCustomFixPrompt] = useState('');
-  const [showCustomPrompt, setShowCustomPrompt] = useState(false);
 
-  const healthScore = analysisResult
-    ? analysisResult.overallHealth
-    : Math.max(10, 100 - issues.length * 15);
+  const healthScore = Math.max(10, 100 - issues.length * 15);
 
   const criticalCount = issues.filter((i) => i.severity === 'critical').length;
   const securityCount = issues.filter((i) => i.severity === 'security').length;
@@ -66,37 +41,15 @@ export const DebuggerPanel: React.FC<Props> = ({
     <div className="flex flex-col h-full bg-[#0d0f17] border border-[#202538] rounded-xl overflow-hidden shadow-xl">
       {/* Top Header */}
       <div className="p-4 bg-[#131622] border-b border-[#202538] flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-red-600/20 border border-red-500/30 rounded-lg text-red-400">
-              <Bug className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                Roblox Luau Debugger & Bug Finder
-              </h2>
-              <p className="text-[11px] text-gray-400">Real-time static linter & Gemini deep engine inspector</p>
-            </div>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-red-600/20 border border-red-500/30 rounded-lg text-red-400">
+            <Bug className="w-4 h-4" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onRunDeepAnalysis}
-              disabled={isAnalyzing || isFixing}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-              <span>{isAnalyzing ? 'Inspecting...' : 'Deep AI Scan'}</span>
-            </button>
-
-            <button
-              onClick={() => onAutoFix()}
-              disabled={isFixing || issues.length === 0}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl text-xs transition-all shadow-md shadow-red-900/30 disabled:opacity-40"
-            >
-              <Wrench className={`w-3.5 h-3.5 ${isFixing ? 'animate-spin' : ''}`} />
-              <span>{isFixing ? 'Repairing Code...' : 'Auto-Fix All'}</span>
-            </button>
+          <div>
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              Roblox Luau Debugger & Bug Finder
+            </h2>
+            <p className="text-[11px] text-gray-400">Real-time static Luau linter</p>
           </div>
         </div>
 
@@ -128,10 +81,10 @@ export const DebuggerPanel: React.FC<Props> = ({
           {/* Memory & Perf */}
           <div className="border-l border-[#1f2538] pl-3">
             <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider flex items-center gap-1">
-              <Zap className="w-3 h-3 text-cyan-400" /> Memory / Perf
+              Memory / Perf
             </div>
             <div className="text-xs font-bold text-gray-200 mt-0.5">
-              {analysisResult ? analysisResult.memoryAndPerfRating : issues.length === 0 ? 'Optimal' : 'Checking'}
+              {issues.length === 0 ? 'Optimal' : 'Checking'}
             </div>
           </div>
 
@@ -141,7 +94,7 @@ export const DebuggerPanel: React.FC<Props> = ({
               <ShieldAlert className="w-3 h-3 text-purple-400" /> Anti-Exploit
             </div>
             <div className="text-xs font-bold text-gray-200 mt-0.5">
-              {analysisResult ? analysisResult.securityRating : securityCount > 0 ? 'Vulnerable' : 'Verified'}
+              {securityCount > 0 ? 'Vulnerable' : 'Verified'}
             </div>
           </div>
         </div>
@@ -190,105 +143,11 @@ export const DebuggerPanel: React.FC<Props> = ({
               Optimizations ({optCount})
             </button>
           </div>
-
-          <button
-            onClick={() => setShowCustomPrompt(!showCustomPrompt)}
-            className="text-[11px] text-gray-400 hover:text-white underline underline-offset-2 shrink-0 ml-2"
-          >
-            {showCustomPrompt ? 'Hide Prompt' : 'Custom Fix Prompt'}
-          </button>
         </div>
-
-        {/* Custom Fix Prompt Input */}
-        {showCustomPrompt && (
-          <div className="flex gap-2 p-2 bg-[#090b10] border border-[#23293d] rounded-xl">
-            <input
-              type="text"
-              placeholder="e.g. Wrap in pcall with 3 retries and add player debounce..."
-              value={customFixPrompt}
-              onChange={(e) => setCustomFixPrompt(e.target.value)}
-              className="flex-1 bg-transparent text-xs text-white placeholder:text-gray-500 focus:outline-none"
-            />
-            <button
-              onClick={() => onAutoFix(customFixPrompt)}
-              disabled={isFixing}
-              className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-lg"
-            >
-              Apply Custom Fix
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Issues List Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {/* Error Notice Banner if any */}
-        {errorMessage && (
-          <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/50 text-xs flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-red-300 block mb-0.5">Operation Notice:</span>
-                <p className="text-gray-300 text-[11px] leading-relaxed">{errorMessage}</p>
-              </div>
-            </div>
-            {onClearError && (
-              <button
-                onClick={onClearError}
-                className="text-gray-400 hover:text-white text-xs px-1.5 py-0.5 rounded"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Recent Fix Banner */}
-        {lastFixResult && (
-          <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-300 mb-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>AI Auto-Fix Successfully Applied!</span>
-            </div>
-            <p className="text-gray-300 text-[11px] mb-2">{lastFixResult.summary}</p>
-            {lastFixResult.changes.length > 0 && (
-              <ul className="space-y-1 pl-4 list-disc text-[11px] text-emerald-200/90 font-mono">
-                {lastFixResult.changes.map((c, i) => (
-                  <li key={i}>
-                    <strong>{c.bug}:</strong> {c.fixApplied}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-2 text-[10px] text-gray-400 border-t border-emerald-900/40 pt-1.5 font-sans">
-              <strong>Studio Verification:</strong> {lastFixResult.howToTestInStudio}
-            </div>
-          </div>
-        )}
-
-        {/* Deep Analysis Summary if Available */}
-        {analysisResult && (
-          <div className="p-3 rounded-xl bg-[#141824] border border-[#232a3e] text-xs space-y-2">
-            <div className="flex items-center gap-1.5 font-bold text-blue-300">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Roblox Architecture Diagnosis</span>
-            </div>
-            <p className="text-gray-300 text-[11px] leading-relaxed">{analysisResult.summary}</p>
-            {analysisResult.quickImprovements.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                  Recommended Upgrades:
-                </span>
-                <ul className="space-y-1 pl-4 list-disc text-[11px] text-gray-300">
-                  {analysisResult.quickImprovements.map((imp, idx) => (
-                    <li key={idx}>{imp}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Empty state when no issues */}
         {filteredIssues.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -297,7 +156,7 @@ export const DebuggerPanel: React.FC<Props> = ({
             </div>
             <h3 className="text-sm font-bold text-gray-200">No {filter !== 'all' ? filter : ''} bugs detected</h3>
             <p className="text-xs text-gray-400 max-w-sm mt-1">
-              Your Luau script follows modern Roblox standards. Run "Deep AI Scan" for deep architectural reviews.
+              Your Luau script follows modern Roblox standards.
             </p>
           </div>
         )}
@@ -322,7 +181,7 @@ export const DebuggerPanel: React.FC<Props> = ({
                 {issue.severity === 'critical' && <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />}
                 {issue.severity === 'security' && <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0" />}
                 {issue.severity === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
-                {issue.severity === 'optimization' && <Zap className="w-4 h-4 text-cyan-400 shrink-0" />}
+                {issue.severity === 'optimization' && <AlertTriangle className="w-4 h-4 text-cyan-400 shrink-0" />}
                 {issue.severity === 'style' && <Info className="w-4 h-4 text-blue-400 shrink-0" />}
 
                 <span className="font-bold text-gray-100 text-xs">{issue.title}</span>

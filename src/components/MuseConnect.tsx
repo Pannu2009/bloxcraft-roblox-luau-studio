@@ -3,23 +3,27 @@
 // as a text bundle (via the OS share sheet) straight into Muse chat.
 
 import React, { useState } from 'react';
-import { Bot, Copy, Check, Share2, Link2, Unlink, ShieldCheck } from 'lucide-react';
+import { Bot, Copy, Check, Share2, Link2, Unlink, ShieldCheck, ClipboardPaste } from 'lucide-react';
 import type { RobloxProject } from '../types/roblox';
 import {
   getPairingCode,
   isIntroduced,
   setIntroduced,
   shareProjectBundle,
+  type BundleFile,
 } from '../utils/museLink';
+import { UstaadApplyModal } from './UstaadApplyModal';
 
 interface Props {
   project: RobloxProject;
+  onApplyBundle: (files: BundleFile[]) => void;
 }
 
-export const MuseConnect: React.FC<Props> = ({ project }) => {
+export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
   const [code] = useState(getPairingCode);
   const [introduced, setIntroducedState] = useState(isIntroduced());
   const [copied, setCopied] = useState(false);
+  const [applyOpen, setApplyOpen] = useState(false);
   const [shareState, setShareState] = useState<'idle' | 'working' | 'shared' | 'copied' | 'failed'>('idle');
 
   const copyCode = async () => {
@@ -118,6 +122,13 @@ export const MuseConnect: React.FC<Props> = ({ project }) => {
           <Share2 className="w-3.5 h-3.5" />
           {shareState === 'working' ? 'Preparing…' : 'Send project to Ustaad'}
         </button>
+        <button
+          onClick={() => setApplyOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 py-2 mt-2 rounded-xl bg-violet-600/25 border border-violet-500/40 text-violet-200 text-xs font-bold hover:bg-violet-600/40 transition-colors"
+        >
+          <ClipboardPaste className="w-3.5 h-3.5" />
+          Apply Ustaad's edits
+        </button>
         {shareState === 'shared' && (
           <p className="text-[10px] text-emerald-300 mt-1.5 flex items-center gap-1">
             <Check className="w-3 h-3" /> Shared — pick Muse in the share sheet.
@@ -138,6 +149,14 @@ export const MuseConnect: React.FC<Props> = ({ project }) => {
           The bundle includes your pairing code and stays on your device until you share it.
         </p>
       </div>
+
+      <UstaadApplyModal
+        isOpen={applyOpen}
+        onClose={() => setApplyOpen(false)}
+        projectName={project.name}
+        existingFiles={project.files}
+        onApply={onApplyBundle}
+      />
     </div>
   );
 };

@@ -71,9 +71,9 @@ export interface RobloxProject {
   files: ScriptFile[];
 }
 
-export type SidebarTab = 'explorer' | 'search' | 'debugger' | 'optimizer' | 'copilot' | 'projects' | 'settings';
+export type SidebarTab = 'explorer' | 'search' | 'debugger' | 'projects' | 'settings';
 
-export type MobileTab = 'editor' | 'debugger' | 'optimizer' | 'console' | 'copilot' | 'explorer' | 'wiring';
+export type MobileTab = 'editor' | 'debugger' | 'console' | 'explorer' | 'wiring';
 
 export interface GenerationResult {
   title: string;

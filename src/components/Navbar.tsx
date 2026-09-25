@@ -3,11 +3,9 @@ import {
   FileCode,
   Plus,
   X,
-  Sparkles,
-  Zap,
   BookOpen,
-  Bot,
   Terminal,
+  Command,
   FolderTree,
   ChevronDown,
   Menu,
@@ -28,13 +26,12 @@ interface Props {
   activeScriptId: string;
   onSelectScript: (id: string) => void;
   onCloseScript: (id: string, e: React.MouseEvent) => void;
-  onOpenGenerator: () => void;
   onOpenGuide: () => void;
-  onToggleCoPilot: () => void;
   onToggleConsole: () => void;
+  onOpenCommands: () => void;
   isConsoleOpen: boolean;
-  activeView: 'editor' | 'optimizer' | 'wiring';
-  onSelectView: (view: 'editor' | 'optimizer' | 'wiring') => void;
+  activeView: 'editor' | 'wiring';
+  onSelectView: (view: 'editor' | 'wiring') => void;
   issueCount: number;
   onToggleSidebar: () => void;
 }
@@ -49,10 +46,9 @@ export const Navbar: React.FC<Props> = ({
   activeScriptId,
   onSelectScript,
   onCloseScript,
-  onOpenGenerator,
   onOpenGuide,
-  onToggleCoPilot,
   onToggleConsole,
+  onOpenCommands,
   isConsoleOpen,
   activeView,
   onSelectView,
@@ -173,18 +169,6 @@ export const Navbar: React.FC<Props> = ({
             </button>
 
             <button
-              onClick={() => onSelectView('optimizer')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                activeView === 'optimizer'
-                  ? 'bg-[#21273b] text-white shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Optimizer</span>
-            </button>
-
-            <button
               onClick={() => onSelectView('wiring')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                 activeView === 'wiring'
@@ -221,15 +205,6 @@ export const Navbar: React.FC<Props> = ({
             <span className="hidden lg:inline">Rojo ZIP</span>
           </button>
 
-          {/* New Script / Generator */}
-          <button
-            onClick={onOpenGenerator}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-red-900/30"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AI Module Gen</span>
-          </button>
-
           {/* Roblox Studio Explorer Placement Guide */}
           <button
             onClick={onOpenGuide}
@@ -238,6 +213,16 @@ export const Navbar: React.FC<Props> = ({
           >
             <FolderTree className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden lg:inline">Studio Guide</span>
+          </button>
+
+          {/* Command Panel */}
+          <button
+            onClick={onOpenCommands}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-[#171a26] hover:bg-[#202538] text-gray-300 hover:text-white border border-[#272d42] rounded-xl text-xs font-medium transition-colors"
+            title="Command panel (Ctrl+Shift+P)"
+          >
+            <Command className="w-3.5 h-3.5 text-violet-400" />
+            <span className="hidden lg:inline">Commands</span>
           </button>
 
           {/* Toggle Output Console */}
@@ -254,14 +239,6 @@ export const Navbar: React.FC<Props> = ({
             <span className="hidden lg:inline">Output</span>
           </button>
 
-          {/* AI Co-Pilot Toggle */}
-          <button
-            onClick={onToggleCoPilot}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#171a26] hover:bg-[#202538] text-cyan-300 hover:text-cyan-200 border border-cyan-500/30 rounded-xl text-xs font-semibold transition-colors"
-          >
-            <Bot className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">AI Co-Pilot</span>
-          </button>
         </div>
       </div>
 
@@ -306,14 +283,6 @@ export const Navbar: React.FC<Props> = ({
               </div>
             );
           })}
-
-          <button
-            onClick={onOpenGenerator}
-            className="p-1 text-gray-400 hover:text-white hover:bg-[#1b2030] rounded-lg transition-colors ml-1"
-            title="Generate new script"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </header>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Folder,
   FolderOpen,
@@ -18,6 +18,7 @@ import {
   Sparkles,
   ExternalLink,
   Bot,
+  FileArchive,
 } from 'lucide-react';
 import { RobloxProject, ScriptFile, ScriptType, SidebarTab } from '../types/roblox';
 import { MuseConnect } from './MuseConnect';
@@ -32,6 +33,8 @@ interface Props {
   onCreateNewProject: () => void;
   onDeleteProject: (projectId: string) => void;
   onExportProjectZip: () => void;
+  onImportProjectZip: (file: File) => void;
+  onApplyBundle: (files: import('../utils/museLink').BundleFile[]) => void;
   onAddFile: (folder?: string) => void;
   onDeleteFile: (fileId: string) => void;
   onRenameFile: (fileId: string, newName: string) => void;
@@ -51,6 +54,8 @@ export const VSExplorerSidebar: React.FC<Props> = ({
   onCreateNewProject,
   onDeleteProject,
   onExportProjectZip,
+  onImportProjectZip,
+  onApplyBundle,
   onAddFile,
   onDeleteFile,
   onRenameFile,
@@ -61,6 +66,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
 }) => {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const zipInputRef = useRef<HTMLInputElement>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
 
   // Group files by folder
@@ -303,13 +309,34 @@ export const VSExplorerSidebar: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-gray-300 text-xs">Your Projects ({projects.length})</span>
-            <button
-              onClick={onCreateNewProject}
-              className="flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold"
-            >
-              <Plus className="w-3 h-3" />
-              <span>New</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => zipInputRef.current?.click()}
+                className="flex items-center gap-1 px-2.5 py-1 bg-[#1a2033] hover:bg-[#242c44] border border-[#2a3350] text-gray-200 rounded-lg text-xs font-semibold"
+                title="Import a .zip as a new project"
+              >
+                <FileArchive className="w-3 h-3 text-cyan-400" />
+                <span>Import ZIP</span>
+              </button>
+              <input
+                ref={zipInputRef}
+                type="file"
+                accept=".zip,application/zip"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onImportProjectZip(f);
+                  e.target.value = '';
+                }}
+              />
+              <button
+                onClick={onCreateNewProject}
+                className="flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold"
+              >
+                <Plus className="w-3 h-3" />
+                <span>New</span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -393,7 +420,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
             </div>
           </div>
 
-          <MuseConnect project={project} />
+          <MuseConnect project={project} onApplyBundle={onApplyBundle} />
         </div>
       )}
     </div>
