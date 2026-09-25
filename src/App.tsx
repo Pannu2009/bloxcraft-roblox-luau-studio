@@ -12,6 +12,7 @@ import { VirtualConsole } from './components/VirtualConsole';
 import { NewProjectModal } from './components/NewProjectModal';
 import { NewFileModal } from './components/NewFileModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { WiringDiagram } from './components/WiringDiagram';
 import { runInstantRobloxLint } from './utils/robloxLinter';
 import { exportProjectAsZip } from './utils/projectZipExport';
 import { analyzeCode, fixCode, optimizeCode } from './utils/geminiClient';
@@ -104,7 +105,7 @@ export default function App() {
   // 2. UI Layout State (VS Code + Mobile)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('explorer');
-  const [activeView, setActiveView] = useState<'editor' | 'optimizer'>('editor');
+  const [activeView, setActiveView] = useState<'editor' | 'optimizer' | 'wiring'>('editor');
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const [editorFontSize, setEditorFontSize] = useState<number>(13);
 
@@ -551,6 +552,24 @@ export default function App() {
               </div>
             )}
 
+            {/* Script Wiring Diagram View (desktop activeView or mobile tab) */}
+            {(activeView === 'wiring' || mobileTab === 'wiring') && (
+              <div className="flex-1 flex flex-col min-w-0 h-full">
+                <WiringDiagram
+                  files={activeProject.files}
+                  onSelectFile={(id) => {
+                    setActiveFileId(id);
+                    setActiveView('editor');
+                    setMobileTab('editor');
+                  }}
+                  onClose={() => {
+                    setActiveView('editor');
+                    if (mobileTab === 'wiring') setMobileTab('editor');
+                  }}
+                />
+              </div>
+            )}
+
             {/* Mobile Output Console Tab */}
             {mobileTab === 'console' && activeScript && (
               <div className="flex-1 flex flex-col min-w-0 h-full md:hidden">
@@ -590,6 +609,8 @@ export default function App() {
             setIsCoPilotOpen(true);
           } else if (tab === 'optimizer') {
             setActiveView('optimizer');
+          } else if (tab === 'wiring') {
+            setActiveView('wiring');
           } else if (tab === 'editor' || tab === 'debugger') {
             setActiveView('editor');
           }
