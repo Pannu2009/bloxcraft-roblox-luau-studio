@@ -29,6 +29,16 @@ or the **BloxCraft-AI-Luau-Studio-APK** artifact on the latest successful
 > Sideloaded APKs may trigger a Play Protect warning — this is normal for
 > apps not distributed through the Play Store.
 
+## Screenshots
+
+| Editor | Debugger | Wiring |
+|---|---|---|
+| ![Editor](screenshots/editor.jpg) | ![Debugger](screenshots/debugger.jpg) | ![Wiring](screenshots/wiring.jpg) |
+
+| Test output | Explorer | Projects |
+|---|---|---|
+| ![Output](screenshots/output.jpg) | ![Explorer](screenshots/explorer.jpg) | ![Projects](screenshots/projects.jpg) |
+
 ## Run your own AI locally (Termux + Ollama)
 
 1. In Termux:
