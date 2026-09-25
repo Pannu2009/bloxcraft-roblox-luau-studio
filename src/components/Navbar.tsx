@@ -14,6 +14,7 @@ import {
   Download,
   FolderKanban,
   Check,
+  Workflow,
 } from 'lucide-react';
 import { ScriptFile, ScriptType, RobloxProject } from '../types/roblox';
 
@@ -32,8 +33,8 @@ interface Props {
   onToggleCoPilot: () => void;
   onToggleConsole: () => void;
   isConsoleOpen: boolean;
-  activeView: 'editor' | 'optimizer';
-  onSelectView: (view: 'editor' | 'optimizer') => void;
+  activeView: 'editor' | 'optimizer' | 'wiring';
+  onSelectView: (view: 'editor' | 'optimizer' | 'wiring') => void;
   issueCount: number;
   onToggleSidebar: () => void;
 }
@@ -181,6 +182,18 @@ export const Navbar: React.FC<Props> = ({
             >
               <Zap className="w-3.5 h-3.5 text-cyan-400" />
               <span>Optimizer</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('wiring')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeView === 'wiring'
+                  ? 'bg-[#21273b] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <Workflow className="w-3.5 h-3.5 text-violet-400" />
+              <span>Wiring</span>
             </button>
           </div>
         </div>
