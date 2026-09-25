@@ -17,8 +17,10 @@ import {
   Settings,
   Sparkles,
   ExternalLink,
+  Bot,
 } from 'lucide-react';
 import { RobloxProject, ScriptFile, ScriptType, SidebarTab } from '../types/roblox';
+import { MuseConnect } from './MuseConnect';
 
 interface Props {
   activeTab: SidebarTab;
@@ -36,6 +38,7 @@ interface Props {
   onCloseSidebar: () => void;
   fontSize: number;
   onChangeFontSize: (size: number) => void;
+  onSelectTab: (tab: SidebarTab) => void;
 }
 
 export const VSExplorerSidebar: React.FC<Props> = ({
@@ -54,6 +57,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
   onCloseSidebar,
   fontSize,
   onChangeFontSize,
+  onSelectTab,
 }) => {
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -151,6 +155,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
 
       {/* Explorer Content */}
       {activeTab === 'explorer' && (
+        <>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {/* Project Title Header */}
           <div className="px-2 py-1 mb-2 rounded-lg bg-[#141824] border border-[#21273a] flex items-center justify-between">
@@ -280,6 +285,17 @@ export const VSExplorerSidebar: React.FC<Props> = ({
             );
           })}
         </div>
+        {/* Mobile shortcut to Studio Settings (Muse connect lives there) */}
+        <div className="p-2 border-t border-[#1a1f2e] md:hidden">
+          <button
+            onClick={() => onSelectTab('settings')}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-600/20 border border-violet-500/40 text-violet-200 text-xs font-bold"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            Connect Muse Assistant
+          </button>
+        </div>
+        </>
       )}
 
       {/* Projects Manager Content */}
@@ -376,6 +392,8 @@ export const VSExplorerSidebar: React.FC<Props> = ({
               <div>• Project format: <strong>Rojo compatible</strong></div>
             </div>
           </div>
+
+          <MuseConnect project={project} />
         </div>
       )}
     </div>
