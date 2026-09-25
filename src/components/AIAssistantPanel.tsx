@@ -131,7 +131,10 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, projectFiles, on
         text: buildProjectContext(projectFiles),
       });
     }
-    const outgoing = [...withContext, ...history];
+    // Small local models drown in long histories: send only the recent slice
+    // to the model (full history is still kept in the UI/storage).
+    const recentHistory = history.slice(-10);
+    const outgoing = [...withContext, ...recentHistory];
     const nextMessages = [...history];
     setMessages(nextMessages);
     saveChatHistory(nextMessages);
