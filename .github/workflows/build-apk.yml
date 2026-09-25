@@ -85,8 +85,8 @@ jobs:
           "$BT/zipalign" -f 4 "$UNSIGNED" /tmp/bloxcraft-aligned.apk
           "$BT/apksigner" sign \
             --ks /tmp/bloxcraft-release.keystore \
-            --ks-pass:env KEYSTORE_PASSWORD \
-            --key-pass:env KEY_PASSWORD \
+            --ks-pass "env:KEYSTORE_PASSWORD" \
+            --key-pass "env:KEY_PASSWORD" \
             --ks-key-alias "$KEY_ALIAS" \
             --out "$SIGNED" /tmp/bloxcraft-aligned.apk
           "$BT/apksigner" verify --print-certs "$SIGNED" | head -3
