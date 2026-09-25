@@ -73,7 +73,7 @@ export interface RobloxProject {
 
 export type SidebarTab = 'explorer' | 'search' | 'debugger' | 'optimizer' | 'copilot' | 'projects' | 'settings';
 
-export type MobileTab = 'editor' | 'debugger' | 'optimizer' | 'console' | 'copilot' | 'explorer';
+export type MobileTab = 'editor' | 'debugger' | 'optimizer' | 'console' | 'copilot' | 'explorer' | 'wiring';
 
 export interface GenerationResult {
   title: string;
