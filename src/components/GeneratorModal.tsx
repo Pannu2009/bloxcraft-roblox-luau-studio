@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Wand2, Sparkles, Folder, Check, FileCode, Layers, HelpCircle, Copy } from 'lucide-react';
 import { ScriptType, GenerationResult } from '../types/roblox';
 import { ROBLOX_TEMPLATES } from '../data/defaultScripts';
-import { getApiUrl } from '../utils/apiConfig';
+import { generateScript } from '../utils/geminiClient';
 
 interface Props {
   isOpen: boolean;
@@ -41,25 +41,14 @@ export const GeneratorModal: React.FC<Props> = ({ isOpen, onClose, onAddScript }
     setIsGenerating(true);
 
     try {
-      const res = await fetch(getApiUrl('/api/roblox/generate'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          scriptType,
-          architecture,
-          strictTyping,
-          includeComments,
-          customRequirements: customReqs,
-        }),
+      const data: GenerationResult = await generateScript({
+        prompt,
+        scriptType,
+        architecture,
+        strictTyping,
+        includeComments,
+        customRequirements: customReqs,
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to generate Roblox script');
-      }
-
-      const data: GenerationResult = await res.json();
       setGenerationResult(data);
     } catch (err: any) {
       console.error(err);
