@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, User, Sparkles, X, Copy, Check, MessageSquare, BookOpen } from 'lucide-react';
 import { ScriptType, ChatMessage } from '../types/roblox';
-import { getApiUrl } from '../utils/apiConfig';
+import { chatWithAI } from '../utils/geminiClient';
 
 interface Props {
   isOpen: boolean;
@@ -54,25 +54,16 @@ export const RobloxCoPilot: React.FC<Props> = ({
     setLoading(true);
 
     try {
-      const res = await fetch(getApiUrl('/api/roblox/chat'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: updated.map((m) => ({ role: m.role, content: m.content })),
-          currentCode,
-          scriptType,
-        }),
-      });
+      const reply = await chatWithAI(
+        updated.map((m) => ({ role: m.role, content: m.content })),
+        currentCode,
+        scriptType
+      );
 
-      if (!res.ok) {
-        throw new Error('AI co-pilot request failed');
-      }
-
-      const data = await res.json();
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
         role: 'assistant',
-        content: data.reply || 'No response returned from Roblox assistant.',
+        content: reply || 'No response returned from Roblox assistant.',
         timestamp: Date.now(),
       };
 
