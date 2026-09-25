@@ -416,17 +416,17 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                   <p className="text-[11px] text-gray-400 line-clamp-2 mb-2">{proj.description}</p>
                   <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono pt-1 border-t border-[#1e2333]">
                     <span>{proj.files.length} scripts</span>
-                    {projects.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Delete project "${proj.name}"? This cannot be undone.`)) {
                           onDeleteProject(proj.id);
-                        }}
-                        className="text-gray-500 hover:text-zinc-400 font-sans"
-                      >
-                        Delete
-                      </button>
-                    )}
+                        }
+                      }}
+                      className="text-gray-500 hover:text-red-400 font-sans"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               );

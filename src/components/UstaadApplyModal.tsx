@@ -59,7 +59,7 @@ export const UstaadApplyModal: React.FC<Props> = ({
     existingFiles.some((e) => (e.folder || 'src') === f.folder && e.name === f.name);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm anim-fade-in">
       <div className="bg-[#12141c] border border-[#2b3044] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#222738] bg-[#161924]">
           <div>

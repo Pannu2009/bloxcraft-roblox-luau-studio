@@ -51,7 +51,8 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const provider = getProvider(settings.providerId);
-  const hasKey = settings.apiKey.trim().length > 0;
+  const needsKey = provider.id !== 'ollama';
+  const hasKey = !needsKey || settings.apiKey.trim().length > 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -191,6 +192,7 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
               ))}
             </select>
           </div>
+          {needsKey ? (
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">API key</label>
             <input
@@ -213,6 +215,14 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
               </a>
             )}
           </div>
+          ) : (
+          <div className="rounded-lg bg-[#141824] border border-[#2a3350] p-2.5 text-[11px] text-gray-300 leading-relaxed">
+            <p className="font-bold text-zinc-200 mb-1">Run AI on your own device — no key needed.</p>
+            <p className="text-gray-400">In Termux:</p>
+            <code className="block mt-1 px-2 py-1.5 rounded bg-black/50 font-mono text-[10px] text-zinc-300 whitespace-pre-wrap">pkg install ollama{'\n'}ollama serve &amp;{'\n'}ollama pull deepseek-r1:8b</code>
+            <p className="text-gray-400 mt-1.5">Keep the base URL as <span className="font-mono text-zinc-300">http://localhost:11434/v1</span> and set the model name to whatever you pulled.</p>
+          </div>
+          )}
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
               Model <span className="text-gray-600 font-normal">(blank = {provider.defaultModel || 'provider default'})</span>

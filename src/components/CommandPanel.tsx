@@ -69,7 +69,7 @@ export const CommandPanel: React.FC<Props> = ({ isOpen, onClose, commands, onRun
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex justify-center items-start pt-[12vh] p-4"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex justify-center items-start pt-[12vh] p-4 anim-fade-in"
       onClick={onClose}
     >
       <div

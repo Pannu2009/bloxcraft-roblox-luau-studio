@@ -15,8 +15,8 @@ export const WelcomeScreen: React.FC<Props> = ({ onNewProject, onImportZip, isIm
   const zipInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#0c0d12] text-center overflow-y-auto">
-      <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-zinc-600 to-zinc-500 flex items-center justify-center shadow-lg shadow-zinc-900/40 mb-5">
+    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#0c0d12] text-center overflow-y-auto anim-fade-in">
+      <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-zinc-600 to-zinc-500 flex items-center justify-center shadow-lg shadow-zinc-900/40 mb-5 anim-pop">
         <span className="text-3xl font-black text-white">B</span>
       </div>
       <h1 className="text-2xl font-black text-white mb-1">BloxCraft Studio</h1>

@@ -139,6 +139,16 @@ export const AI_PROVIDERS: AIProvider[] = [
     },
   },
   {
+    id: 'ollama',
+    name: 'Ollama (localhost — Termux / PC)',
+    keyUrl: 'https://ollama.com/download',
+    keyPlaceholder: 'not needed (leave empty)',
+    defaultModel: 'deepseek-r1:8b',
+    needsBaseUrl: true,
+    defaultBaseUrl: 'http://localhost:11434/v1',
+    ...openAICompatible((b) => `${b}/chat/completions`),
+  },
+  {
     id: 'custom',
     name: 'Custom (OpenAI-compatible)',
     keyUrl: '',

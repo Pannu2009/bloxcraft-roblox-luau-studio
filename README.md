@@ -1,88 +1,84 @@
-# BloxCraft AI — Roblox Luau Script & Module Studio (v1.1)
+# BloxCraft Studio — Roblox Luau Coding Workspace
 
-[![Version](https://img.shields.io/badge/version-1.1.0-red.svg)](https://github.com/)
-[![Luau](https://img.shields.io/badge/Luau-5.1%20Strict-blue.svg)](https://luau.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+A clean, mobile-first coding workspace for Roblox Luau. Write, debug, test, and
+ship Roblox scripts from your phone or desktop — no Roblox Studio required.
 
-An intelligent, full-featured Roblox Luau development IDE inspired by **Luadroid** and **VS Code**, engineered for writing, debugging, optimizing, and architecting production-grade Roblox scripts and ModuleScripts on desktop and mobile.
+## Features
 
----
+- **Code editor** — syntax-highlighted Luau editor with tabs, file explorer, and multi-file projects
+- **Real bug finder** — static Luau linter with one-tap auto-fix and Fix All
+- **On-device test runner** — execute Luau with Fengari (mocked Roblox engine), right on your phone
+- **Wiring diagram** — visualize script dependencies (require graph) with pan/zoom
+- **Bring-your-own AI** — connect OpenAI, DeepSeek, Anthropic, Gemini, OpenRouter,
+  any OpenAI-compatible endpoint, or **Ollama on localhost** (e.g. DeepSeek running
+  in Termux). Your key never leaves your device.
+- **Ustaad link** — pair with the Ustaad assistant, share your project as a file,
+  and apply AI-suggested edits back with one tap
+- **GitHub sync** — device-flow login, push/pull projects per-project
+- **Smart import** — bring in `.lua`/`.luau` files or whole `.zip` projects
+  (Rojo and Studio service layouts auto-mapped to `src/server`, `src/client`, `src/shared`)
+- **Monochrome UI** — black & grey, distraction-free, built mobile-first
 
-## 🚀 Key Features
+## Get the app
 
-### 🎨 Roblox Studio Dark Theme Syntax Highlighting
-- **Signature Keyword Color**: `local`, `function`, `end`, `if`, `then`, `else`, `return` in authentic **Roblox Studio Red** (`#F86D7C`).
-- **Roblox Globals & Services**: `game`, `workspace`, `script`, `task`, `Vector3`, `CFrame`, `Instance`, `TweenInfo`, `Players`, `DataStoreService`, and `RunService` in **Cyan / Light Blue** (`#84D6F7`).
-- **Strings**: Quoted (`"..."`, `'...'`), multiline (`[[...]]`), and modern Luau string interpolation (`` `Player: {player.UserId}` ``) in **Roblox Green** (`#ADDB67`).
-- **Luau Type Annotations**: Primitive and custom types (`number`, `string`, `boolean`, `any`, `Player`, `Model`, `RBXScriptConnection`, `:: type`) in **Teal** (`#4EC9B0`).
-- **Numbers & Booleans**: Peach-orange numbers (`#FFAB70`) and amber booleans/nil (`#FFB454`).
-- **Status Bar Legend & Quick Toggle**: Switch between Roblox Studio colors and standard monospace mode at any time.
+Download the latest signed APK from
+[Releases](https://github.com/Pannu2009/bloxcraft-roblox-luau-studio/releases)
+or the **BloxCraft-AI-Luau-Studio-APK** artifact on the latest successful
+[Actions run](https://github.com/Pannu2009/bloxcraft-roblox-luau-studio/actions).
 
-### 📱 Luadroid Mobile Keyboard & Companion Bar
-- Tailored for mobile and tablet touch coding: quick-tap buttons for `Tab`, `local`, `function`, `end`, `task.wait()`, `pcall`, `` `...` ``, `:: type`, `export type`, and symbols.
-- In-editor font zoom controls (`-` / `+`) and gesture-friendly scrolling.
-- Instant Run / Simulate and AI Fix shortcuts directly on the mobile bar.
+> Sideloaded APKs may trigger a Play Protect warning — this is normal for
+> apps not distributed through the Play Store.
 
-### 🧠 AI Luau Engine & Real-Time Debugger
-- **Deep Code Analysis**: Detects silent memory leaks, server-client remote exploits, deprecated `wait()` / `spawn()` calls, nil-indexing hazards, and unbounded loops.
-- **One-Click Auto-Fix**: Automatically modernizes deprecated APIs, implements proper `--!strict` typing, adds `task.wait()` throttling, and protects network remotes with rate limiting.
-- **Zero-Downtime Fallback Architecture**: Multi-model fallback (`gemini-3.8-flash` → `gemini-3.1-flash-lite` → `gemini-flash-latest`) combined with deterministic local Luau AST repair rules for continuous uptime during API surges.
+## Run your own AI locally (Termux + Ollama)
 
-### 📂 VS Code Project Architecture & Multi-File Explorer
-- Create, rename, delete, and organize scripts across `src/server`, `src/client`, and `src/shared`.
-- Support for `Script` (ServerScript), `LocalScript` (Client), and `ModuleScript` (Shared).
-- One-click ZIP download structured for Roblox Studio and Rojo workflows.
+1. In Termux:
+   ```sh
+   pkg install ollama
+   ollama serve &
+   ollama pull deepseek-r1:8b
+   ```
+2. In BloxCraft, open the **AI Assistant** tab → provider **Ollama (localhost)**.
+3. Base URL stays `http://localhost:11434/v1`, model `deepseek-r1:8b`.
+4. Chat, and tap **Apply** on any code block to write it into your script.
 
-### 🛠️ Built-in Starter Templates
-- **Roblox RPG & Combat Simulator**: Server-authoritative hitboxes, DataStore profile saves, and OOP Weapon classes.
-- **Tycoon & Economy Engine**: Auto-droppers, plot ownership, debounce validation, and ReplicatedStorage remotes.
-- **Pet Simulator & Inventory**: Probability egg hatching, network compression, and client UI tweening.
-- **DataStore2 / ProfileService Template**: Session locking, anti-duplication, and auto-saving.
+## Develop
 
----
-
-## 📦 What's New in v1.1
-
-- ✨ **Roblox Studio Dark Theme Highlighting**: Fully matching Roblox Studio's default code editor palette with red `local` keywords.
-- ⚡ **Modern Luau Syntax**: Added syntax support for backtick string interpolation (`` `...` ``), compound operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `..=`), and Luau typecasting (`::`).
-- 🛡️ **Multi-Tier API Fallback**: Resilient error handling with automatic model fallback and rule-based repair engine.
-- 📱 **Enhanced Luadroid Key Bar**: Color-coded mobile buttons with updated Luau tokens.
-
----
-
-## 🏃 Quick Start
-
-### Prerequisites
-- Node.js 18+ or 20+
-- npm or pnpm
-
-### Installation
-```bash
-# Clone repository
-git clone https://github.com/your-username/bloxcraft-roblox-luau-studio.git
-cd bloxcraft-roblox-luau-studio
-
-# Install dependencies
+```sh
 npm install
-
-# Setup environment variables
-cp .env.example .env
-# Add your GEMINI_API_KEY to .env
+npm run dev        # web dev server
+npm run build      # production web build
 ```
 
-### Run Locally
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Android APK
 
-### Production Build
-```bash
+```sh
 npm run build
-npm start
+npx cap sync android
+cd android && ./gradlew assembleRelease
 ```
 
----
+CI builds and signs the release APK automatically on every push to `main`
+(see `.github/workflows/build-apk.yml`). Signing secrets required:
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+`ANDROID_KEY_PASSWORD`.
 
-## 📄 License
-MIT License © 2026 BloxCraft AI Studio
+## Project structure
+
+```
+src/
+  components/   # UI: editor, explorer, debugger, assistant, modals…
+  utils/        # linter, zip import/export, GitHub sync, AI providers, Luau runner
+  types/        # RobloxProject / ScriptFile models
+  data/         # project templates
+android/        # Capacitor Android shell
+```
+
+## Roadmap
+
+- Roblox Studio plugin for two-way sync
+- More linter rules & auto-fixes
+- Cloud backup / multi-device sync
+
+## License
+
+Private project — all rights reserved for now.
