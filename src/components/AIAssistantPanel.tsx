@@ -61,7 +61,9 @@ function buildProjectContext(files: ScriptFile[]): string {
 
 const SYSTEM_PROMPT =
   'You are a Roblox Luau coding assistant inside the BloxCraft mobile studio. ' +
-  'Answer concisely. When you write code, put the complete file in ONE fenced ```luau block. ' +
+  'Answer concisely. File contents are shown with line numbers as "N| code" — ' +
+  'use them when asked about specific lines. ' +
+  'When you write code, put the complete file in ONE fenced ```luau block. ' +
   'Prefer task.wait/task.spawn/task.delay over legacy wait/spawn/delay, add WaitForChild timeouts, ' +
   'and keep server/client boundaries correct.';
 
@@ -117,12 +119,18 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, projectFiles, on
     // Prepend context as a leading user message so every provider shape works.
     const withContext: ChatMessage[] = [{ role: 'user', text: SYSTEM_PROMPT }];
     if (contextMode === 'current' && activeFile) {
+      // Number the lines so the model can answer "what's on line N" precisely.
+      const numbered = activeFile.code
+        .split('\n')
+        .map((line, i) => `${i + 1}| ${line}`)
+        .join('\n');
       withContext.push({
         role: 'user',
         text:
-          `Current file: ${activeFile.name} [${activeFile.type}]\n` +
-          '```luau\n' +
-          activeFile.code +
+          `Current file: ${activeFile.name} [${activeFile.type}]` +
+          (activeFile.folder ? ` — folder: ${activeFile.folder}` : '') +
+          '\n```luau\n' +
+          numbered +
           '\n```',
       });
     } else if (contextMode === 'project' && projectFiles && projectFiles.length) {
