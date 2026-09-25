@@ -6,6 +6,7 @@ import {
   Zap,
   Terminal,
   Bot,
+  Workflow,
 } from 'lucide-react';
 import { MobileTab } from '../types/roblox';
 
@@ -26,6 +27,7 @@ export const MobileBottomNav: React.FC<Props> = ({ activeTab, onSelectTab, issue
     { id: 'explorer', label: 'Files', icon: FolderTree },
     { id: 'debugger', label: 'Bugs', icon: Bug, badge: issueCount },
     { id: 'optimizer', label: 'Optimize', icon: Zap },
+    { id: 'wiring', label: 'Wiring', icon: Workflow },
     { id: 'console', label: 'Output', icon: Terminal },
     { id: 'copilot', label: 'AI Chat', icon: Bot },
   ];
