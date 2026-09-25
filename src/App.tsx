@@ -14,7 +14,7 @@ import { NewFileModal } from './components/NewFileModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { runInstantRobloxLint } from './utils/robloxLinter';
 import { exportProjectAsZip } from './utils/projectZipExport';
-import { getApiUrl } from './utils/apiConfig';
+import { analyzeCode, fixCode, optimizeCode } from './utils/geminiClient';
 import {
   INITIAL_PROJECT,
   PROJECT_TEMPLATES,
@@ -317,21 +317,11 @@ export default function App() {
     setDebuggerError(null);
 
     try {
-      const res = await fetch(getApiUrl('/api/roblox/analyze'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: activeScript.code,
-          scriptType: activeScript.type,
-          context: `Project: ${activeProject.name}, Placement: ${activeScript.suggestedPlacement}`,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Analysis request failed');
-      }
-      const data: AnalysisResult = await res.json();
+      const data: AnalysisResult = await analyzeCode(
+        activeScript.code,
+        activeScript.type,
+        `Project: ${activeProject.name}, Placement: ${activeScript.suggestedPlacement}`
+      );
       setAnalysisResults((prev) => ({ ...prev, [activeScript.id]: data }));
     } catch (err: any) {
       console.error(err);
@@ -347,21 +337,11 @@ export default function App() {
     setDebuggerError(null);
 
     try {
-      const res = await fetch(getApiUrl('/api/roblox/fix'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: activeScript.code,
-          scriptType: activeScript.type,
-          instruction: instruction || 'Fix all detected bugs, deprecations, and potential runtime errors',
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Fix request failed');
-      }
-      const data: FixResult = await res.json();
+      const data: FixResult = await fixCode(
+        activeScript.code,
+        activeScript.type,
+        instruction || 'Fix all detected bugs, deprecations, and potential runtime errors'
+      );
       setFixResults((prev) => ({ ...prev, [activeScript.id]: data }));
       handleCodeChange(data.fixedCode);
     } catch (err: any) {
@@ -377,18 +357,7 @@ export default function App() {
     setIsOptimizing(true);
 
     try {
-      const res = await fetch(getApiUrl('/api/roblox/optimize'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: activeScript.code,
-          scriptType: activeScript.type,
-          goal,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Optimization request failed');
-      const data: OptimizationResult = await res.json();
+      const data: OptimizationResult = await optimizeCode(activeScript.code, activeScript.type, goal);
       setOptimizationResults((prev) => ({ ...prev, [activeScript.id]: data }));
     } catch (err: any) {
       console.error(err);
