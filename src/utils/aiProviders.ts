@@ -34,7 +34,7 @@ function openAICompatible(
       url: url(baseUrl.replace(/\/+$/, '')),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
+        ...(apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}),
         ...extraHeaders,
       },
       body: {
@@ -209,7 +209,8 @@ export async function chatWithAI(
   messages: ChatMessage[]
 ): Promise<string> {
   const provider = getProvider(settings.providerId);
-  if (!settings.apiKey.trim() && provider.id !== 'custom') {
+  const needsKey = provider.id !== 'custom' && provider.id !== 'ollama';
+  if (!settings.apiKey.trim() && needsKey) {
     throw new Error('Add your API key first (gear icon above). It stays on this device.');
   }
   if (provider.id === 'custom' && !effectiveBaseUrl(settings)) {
