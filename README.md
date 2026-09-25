@@ -41,6 +41,9 @@ or the **BloxCraft-AI-Luau-Studio-APK** artifact on the latest successful
 3. Base URL stays `http://localhost:11434/v1`, model `deepseek-r1:8b`.
 4. Chat, and tap **Apply** on any code block to write it into your script.
 
+Full guide (models for phones, cloud keys, chat context, sharing files):
+[`docs/ai-models.md`](docs/ai-models.md).
+
 ## Develop
 
 ```sh

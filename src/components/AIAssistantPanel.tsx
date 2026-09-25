@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ScriptFile } from '../types/roblox';
+import { buildDependencyGraph } from '../utils/dependencyGraph';
 import {
   AI_PROVIDERS,
   getProvider,
@@ -31,7 +32,31 @@ import {
 
 interface Props {
   activeFile?: ScriptFile;
+  projectFiles?: ScriptFile[];
   onApplyCode: (code: string) => void;
+}
+
+type ContextMode = 'current' | 'project' | 'none';
+
+function buildProjectContext(files: ScriptFile[]): string {
+  const graph = buildDependencyGraph(files);
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  let out = `Project files (${files.length}):\n`;
+  for (const f of files) {
+    const node = byId.get(f.id);
+    const wires = node && node.requires.length
+      ? ` | requires: ${node.requires.join(', ')}`
+      : '';
+    const usedBy = node && node.requiredBy.length
+      ? ` | used by: ${node.requiredBy.map((id) => byId.get(id)?.name || id).join(', ')}`
+      : '';
+    const code = f.code.length > 6000 ? f.code.slice(0, 6000) + '\n-- …(truncated)' : f.code;
+    out += `\n--- ${f.name} [${f.type}]${f.folder ? ` (${f.folder})` : ''}${wires}${usedBy}\n\`\`\`luau\n${code}\n\`\`\`\n`;
+  }
+  if (graph.cycles.length) {
+    out += `\nDependency cycles detected: ${graph.cycles.map((c) => c.join(' → ')).join('; ')}\n`;
+  }
+  return out;
 }
 
 const SYSTEM_PROMPT =
@@ -40,13 +65,33 @@ const SYSTEM_PROMPT =
   'Prefer task.wait/task.spawn/task.delay over legacy wait/spawn/delay, add WaitForChild timeouts, ' +
   'and keep server/client boundaries correct.';
 
-export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) => {
+const CHAT_HISTORY_KEY = 'bloxcraft_ai_chat_history';
+const MAX_HISTORY = 50;
+
+function loadChatHistory(): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr.slice(-MAX_HISTORY);
+    }
+  } catch {}
+  return [];
+}
+
+function saveChatHistory(msgs: ChatMessage[]) {
+  try {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(msgs.slice(-MAX_HISTORY)));
+  } catch {}
+}
+
+export const AIAssistantPanel: React.FC<Props> = ({ activeFile, projectFiles, onApplyCode }) => {
   const [settings, setSettings] = useState<AISettings>(loadAISettings);
   const [showSettings, setShowSettings] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(loadChatHistory);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [includeFile, setIncludeFile] = useState(true);
+  const [contextMode, setContextMode] = useState<ContextMode>('current');
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +116,7 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
     const history: ChatMessage[] = [...messages, { role: 'user', text }];
     // Prepend context as a leading user message so every provider shape works.
     const withContext: ChatMessage[] = [{ role: 'user', text: SYSTEM_PROMPT }];
-    if (includeFile && activeFile) {
+    if (contextMode === 'current' && activeFile) {
       withContext.push({
         role: 'user',
         text:
@@ -80,14 +125,25 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
           activeFile.code +
           '\n```',
       });
+    } else if (contextMode === 'project' && projectFiles && projectFiles.length) {
+      withContext.push({
+        role: 'user',
+        text: buildProjectContext(projectFiles),
+      });
     }
     const outgoing = [...withContext, ...history];
-    setMessages(history);
+    const nextMessages = [...history];
+    setMessages(nextMessages);
+    saveChatHistory(nextMessages);
     setInput('');
     setSending(true);
     try {
       const reply = await chatWithAI(settings, outgoing);
-      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+      setMessages((prev) => {
+        const updated: ChatMessage[] = [...prev, { role: 'assistant', text: reply }];
+        saveChatHistory(updated);
+        return updated;
+      });
     } catch (e: any) {
       setError(e?.message || 'Something went wrong.');
     } finally {
@@ -166,7 +222,7 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
         </button>
         {messages.length > 0 && (
           <button
-            onClick={() => setMessages([])}
+            onClick={() => { setMessages([]); saveChatHistory([]); }}
             className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#1f2538] transition-colors"
             title="Clear chat"
           >
@@ -295,21 +351,27 @@ export const AIAssistantPanel: React.FC<Props> = ({ activeFile, onApplyCode }) =
         </p>
       )}
 
-      {/* Context chip */}
-      {activeFile && (
-        <button
-          onClick={() => setIncludeFile((v) => !v)}
-          className={`mt-2 flex items-center gap-1.5 self-start px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors ${
-            includeFile
-              ? 'bg-zinc-600/20 border-zinc-500/40 text-zinc-200'
-              : 'bg-[#141824] border-[#23283b] text-gray-500'
-          }`}
-          title="Include the current file as context"
-        >
-          <FileCode className="w-3 h-3" />
-          {includeFile ? '✓ ' : ''}{activeFile.name}
-        </button>
-      )}
+      {/* Context selector */}
+      <div className="mt-2 flex items-center gap-1.5 self-start">
+        {(['current', 'project', 'none'] as ContextMode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => setContextMode(m)}
+            className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors ${
+              contextMode === m
+                ? 'bg-zinc-600/20 border-zinc-500/40 text-zinc-200'
+                : 'bg-[#141824] border-[#23283b] text-gray-500'
+            }`}
+            title={
+              m === 'current' ? 'Include the current file as context'
+              : m === 'project' ? 'Include ALL project files + how they connect (wiring)'
+              : 'No file context'
+            }
+          >
+            {m === 'current' ? `📄 ${activeFile?.name || 'file'}` : m === 'project' ? `📦 whole project (${projectFiles?.length || 0})` : '💬 chat only'}
+          </button>
+        ))}
+      </div>
 
       {/* Input */}
       <div className="flex items-center gap-1.5 mt-2">
