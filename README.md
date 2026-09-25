@@ -31,13 +31,13 @@ or the **BloxCraft-AI-Luau-Studio-APK** artifact on the latest successful
 
 ## Screenshots
 
-| Editor | Debugger | Wiring |
+| Welcome | Editor | Debugger |
 |---|---|---|
-| ![Editor](screenshots/editor.jpg) | ![Debugger](screenshots/debugger.jpg) | ![Wiring](screenshots/wiring.jpg) |
+| ![Welcome](screenshots/welcome.jpg) | ![Editor](screenshots/editor.jpg) | ![Debugger](screenshots/debugger.jpg) |
 
-| Test output | Explorer | Projects |
-|---|---|---|
-| ![Output](screenshots/output.jpg) | ![Explorer](screenshots/explorer.jpg) | ![Projects](screenshots/projects.jpg) |
+| Wiring | Test output | Explorer | Projects |
+|---|---|---|---|
+| ![Wiring](screenshots/wiring.jpg) | ![Output](screenshots/output.jpg) | ![Explorer](screenshots/explorer.jpg) | ![Projects](screenshots/projects.jpg) |
 
 ## Run your own AI locally (Termux + Ollama)
 
