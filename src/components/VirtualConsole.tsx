@@ -82,7 +82,7 @@ export const VirtualConsole: React.FC<Props> = ({ file, files }) => {
             <button
               onClick={() => setFilter('warn')}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                filter === 'warn' ? 'bg-amber-950/60 text-amber-300' : 'text-gray-400 hover:text-gray-200'
+                filter === 'warn' ? 'bg-zinc-950/60 text-zinc-300' : 'text-gray-400 hover:text-gray-200'
               }`}
             >
               Warns
@@ -90,7 +90,7 @@ export const VirtualConsole: React.FC<Props> = ({ file, files }) => {
             <button
               onClick={() => setFilter('error')}
               className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
-                filter === 'error' ? 'bg-red-950/60 text-red-300' : 'text-gray-400 hover:text-gray-200'
+                filter === 'error' ? 'bg-zinc-950/60 text-zinc-300' : 'text-gray-400 hover:text-gray-200'
               }`}
             >
               Errors
@@ -100,10 +100,10 @@ export const VirtualConsole: React.FC<Props> = ({ file, files }) => {
           <button
             onClick={runReal}
             disabled={isRunning}
-            className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 disabled:opacity-50 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 bg-zinc-600/20 hover:bg-zinc-600/30 disabled:opacity-50 text-zinc-300 border border-zinc-500/40 rounded-lg text-xs font-medium transition-colors"
             title="Execute this script on-device (real run, mocked engine)"
           >
-            {isRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-emerald-300" />}
+            {isRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-zinc-300" />}
             <span>{isRunning ? 'Running…' : 'Run'}</span>
           </button>
 
@@ -129,23 +129,23 @@ export const VirtualConsole: React.FC<Props> = ({ file, files }) => {
               key={log.id}
               className={`flex items-start gap-2 py-0.5 px-1.5 rounded ${
                 log.type === 'error'
-                  ? 'bg-red-950/20 text-red-400 border-l-2 border-red-500'
+                  ? 'bg-zinc-950/20 text-zinc-400 border-l-2 border-zinc-500'
                   : log.type === 'warn'
-                  ? 'bg-amber-950/20 text-amber-300 border-l-2 border-amber-500'
+                  ? 'bg-zinc-950/20 text-zinc-300 border-l-2 border-zinc-500'
                   : log.type === 'print'
-                  ? 'text-cyan-300'
+                  ? 'text-zinc-300'
                   : log.type === 'stub'
-                  ? 'text-violet-300/80'
+                  ? 'text-zinc-300/80'
                   : 'text-gray-300'
               }`}
             >
               <span className="text-gray-500 text-[10px] shrink-0">{log.timestamp}</span>
 
-              {log.type === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />}
-              {log.type === 'warn' && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />}
-              {log.type === 'info' && <Info className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />}
-              {log.type === 'stub' && <Cpu className="w-3.5 h-3.5 text-violet-400/70 shrink-0 mt-0.5" />}
-              {log.type === 'print' && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500/70 shrink-0 mt-0.5" />}
+              {log.type === 'error' && <AlertCircle className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />}
+              {log.type === 'warn' && <AlertTriangle className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />}
+              {log.type === 'info' && <Info className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />}
+              {log.type === 'stub' && <Cpu className="w-3.5 h-3.5 text-zinc-400/70 shrink-0 mt-0.5" />}
+              {log.type === 'print' && <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500/70 shrink-0 mt-0.5" />}
 
               <div className="flex-1 break-words">
                 <span className="text-gray-400 font-semibold mr-1">[{log.source || 'Script'}]:</span>

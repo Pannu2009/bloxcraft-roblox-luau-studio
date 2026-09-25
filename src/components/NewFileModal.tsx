@@ -53,7 +53,7 @@ export const NewFileModal: React.FC<Props> = ({ isOpen, onClose, defaultFolder, 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#222738] bg-[#161924]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-8 h-8 rounded-lg bg-zinc-600/20 border border-zinc-500/30 flex items-center justify-center text-zinc-400">
               <FilePlus2 className="w-4 h-4" />
             </div>
             <div>
@@ -83,10 +83,10 @@ export const NewFileModal: React.FC<Props> = ({ isOpen, onClose, defaultFolder, 
                 setError('');
               }}
               placeholder="e.g. WeaponService or InventoryController"
-              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3 py-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-red-500/50 font-mono"
+              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3 py-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-zinc-500/50 font-mono"
               autoFocus
             />
-            {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+            {error && <p className="text-xs text-zinc-400 mt-1">{error}</p>}
           </div>
 
           <div>
@@ -102,10 +102,10 @@ export const NewFileModal: React.FC<Props> = ({ isOpen, onClose, defaultFolder, 
                   className={`p-2 rounded-xl text-xs font-bold transition-all border ${
                     scriptType === type
                       ? type === 'ModuleScript'
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                        ? 'bg-zinc-500/20 text-zinc-300 border-zinc-500/50'
                         : type === 'ServerScript'
-                        ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                        ? 'bg-zinc-500/20 text-zinc-300 border-zinc-500/50'
+                        : 'bg-zinc-500/20 text-zinc-300 border-zinc-500/50'
                       : 'bg-[#161a27] text-gray-400 border-[#242a3d]'
                   }`}
                 >
@@ -140,7 +140,7 @@ export const NewFileModal: React.FC<Props> = ({ isOpen, onClose, defaultFolder, 
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all"
+              className="px-4 py-1.5 bg-zinc-600 hover:bg-zinc-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all"
             >
               Create Script
             </button>

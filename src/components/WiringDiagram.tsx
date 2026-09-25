@@ -205,14 +205,14 @@ export const WiringDiagram: React.FC<Props> = ({ files, onSelectFile, onClose })
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1a1f2e] bg-[#0a0c12] shrink-0 flex-wrap">
         <div className="flex items-center gap-2 mr-auto">
-          <Boxes className="w-4 h-4 text-violet-400" />
+          <Boxes className="w-4 h-4 text-zinc-400" />
           <span className="text-sm font-bold text-white">Script Wiring</span>
           <span className="text-[11px] text-gray-400">
             {graph.stats.files} scripts · {graph.stats.wires} wires
             {graph.stats.externals > 0 && ` · ${graph.stats.externals} external`}
           </span>
           {graph.stats.cycles > 0 && (
-            <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/40 text-red-300 font-semibold">
+            <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-zinc-500/15 border border-zinc-500/40 text-zinc-300 font-semibold">
               <AlertTriangle className="w-3 h-3" /> {graph.stats.cycles} circular
             </span>
           )}
@@ -303,7 +303,7 @@ export const WiringDiagram: React.FC<Props> = ({ files, onSelectFile, onClose })
                         </div>
                       </div>
                       {!n.isExternal && (n.requires.length > 0 || n.requiredBy.length > 0) && (
-                        <div className="ml-auto shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-[#1a2033] text-cyan-300 font-bold">
+                        <div className="ml-auto shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-[#1a2033] text-zinc-300 font-bold">
                           {n.requires.length}→{n.requiredBy.length}
                         </div>
                       )}
@@ -320,7 +320,7 @@ export const WiringDiagram: React.FC<Props> = ({ files, onSelectFile, onClose })
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#8b5cf6' }} /> Module</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#f43f5e' }} /> Server</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: '#38bdf8' }} /> Client</span>
-          <span className="flex items-center gap-1"><span className="w-6 border-t-2 border-dashed border-red-500" /> circular</span>
+          <span className="flex items-center gap-1"><span className="w-6 border-t-2 border-dashed border-zinc-500" /> circular</span>
         </div>
       </div>
 
@@ -347,11 +347,11 @@ export const WiringDiagram: React.FC<Props> = ({ files, onSelectFile, onClose })
                   const tNode = target ? nodeById.get(target.to) : undefined;
                   return (
                     <div key={r} className="flex items-center gap-1.5 text-[11px] text-gray-300">
-                      <ArrowRight className="w-3 h-3 text-cyan-400 shrink-0" />
+                      <ArrowRight className="w-3 h-3 text-zinc-400 shrink-0" />
                       <span className="font-mono truncate">{r}</span>
                       {tNode && !tNode.isExternal && (
                         <button
-                          className="ml-auto shrink-0 text-cyan-300 hover:underline"
+                          className="ml-auto shrink-0 text-zinc-300 hover:underline"
                           onClick={() => {
                             onSelectFile(tNode.id);
                             onClose();
@@ -384,7 +384,7 @@ export const WiringDiagram: React.FC<Props> = ({ files, onSelectFile, onClose })
                 })}
               </div>
               <button
-                className="w-full py-1.5 rounded-xl bg-violet-600/30 border border-violet-500/40 text-violet-200 text-xs font-bold hover:bg-violet-600/50"
+                className="w-full py-1.5 rounded-xl bg-zinc-600/30 border border-zinc-500/40 text-zinc-200 text-xs font-bold hover:bg-zinc-600/50"
                 onClick={() => { onSelectFile(selected.id); onClose(); }}
               >
                 Open in editor

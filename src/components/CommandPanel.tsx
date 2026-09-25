@@ -77,7 +77,7 @@ export const CommandPanel: React.FC<Props> = ({ isOpen, onClose, commands, onRun
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-4 py-3 border-b border-[#222738]">
-          <TerminalSquare className="w-4 h-4 text-cyan-400 shrink-0" />
+          <TerminalSquare className="w-4 h-4 text-zinc-400 shrink-0" />
           <input
             ref={inputRef}
             value={query}

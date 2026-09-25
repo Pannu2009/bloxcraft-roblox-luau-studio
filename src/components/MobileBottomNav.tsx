@@ -5,7 +5,6 @@ import {
   Bug,
   Terminal,
   Workflow,
-  SquareTerminal,
 } from 'lucide-react';
 import { MobileTab } from '../types/roblox';
 
@@ -13,42 +12,39 @@ interface Props {
   activeTab: MobileTab;
   onSelectTab: (tab: MobileTab) => void;
   issueCount: number;
-  onOpenCommands: () => void;
 }
 
-export const MobileBottomNav: React.FC<Props> = ({ activeTab, onSelectTab, issueCount, onOpenCommands }) => {
+export const MobileBottomNav: React.FC<Props> = ({ activeTab, onSelectTab, issueCount }) => {
   const items: Array<{
     id: MobileTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     badge?: number;
-    isCommands?: boolean;
   }> = [
     { id: 'editor', label: 'Editor', icon: FileCode },
     { id: 'explorer', label: 'Files', icon: FolderTree },
     { id: 'debugger', label: 'Bugs', icon: Bug, badge: issueCount },
     { id: 'wiring', label: 'Wiring', icon: Workflow },
     { id: 'console', label: 'Output', icon: Terminal },
-    { id: 'editor', label: 'Cmd', icon: SquareTerminal, isCommands: true },
   ];
 
   return (
     <nav className="md:hidden flex items-center justify-around bg-[#0a0c12] border-t border-[#1e2336] py-1 px-1 shrink-0 z-30 select-none">
-      {items.map((item, idx) => {
+      {items.map((item) => {
         const Icon = item.icon;
-        const isActive = !item.isCommands && activeTab === item.id;
+        const isActive = activeTab === item.id;
         return (
           <button
-            key={`${item.id}-${idx}`}
-            onClick={() => (item.isCommands ? onOpenCommands() : onSelectTab(item.id))}
+            key={item.id}
+            onClick={() => onSelectTab(item.id)}
             className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-colors flex-1 ${
-              isActive ? 'text-red-400 font-bold' : 'text-gray-400 hover:text-gray-200'
+              isActive ? 'text-zinc-400 font-bold' : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             <div className="relative">
               <Icon className="w-4 h-4" />
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="absolute -top-1 -right-2 px-1 min-w-[14px] h-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-2 px-1 min-w-[14px] h-3.5 rounded-full bg-zinc-500 text-white text-[8px] font-bold flex items-center justify-center">
                   {item.badge}
                 </span>
               )}

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   Folder,
   FolderOpen,
+  FolderTree,
   FileCode,
   Plus,
   Trash2,
@@ -19,9 +20,11 @@ import {
   ExternalLink,
   Bot,
   FileArchive,
+  FileUp,
 } from 'lucide-react';
 import { RobloxProject, ScriptFile, ScriptType, SidebarTab } from '../types/roblox';
 import { MuseConnect } from './MuseConnect';
+import { AIAssistantPanel } from './AIAssistantPanel';
 
 interface Props {
   activeTab: SidebarTab;
@@ -34,10 +37,12 @@ interface Props {
   onDeleteProject: (projectId: string) => void;
   onExportProjectZip: () => void;
   onImportProjectZip: (file: File) => void;
+  onImportLuaFiles: (files: FileList) => void;
   onApplyBundle: (files: import('../utils/museLink').BundleFile[]) => void;
   onAddFile: (folder?: string) => void;
   onDeleteFile: (fileId: string) => void;
   onRenameFile: (fileId: string, newName: string) => void;
+  onApplyAICode: (code: string) => void;
   onCloseSidebar: () => void;
   fontSize: number;
   onChangeFontSize: (size: number) => void;
@@ -55,10 +60,12 @@ export const VSExplorerSidebar: React.FC<Props> = ({
   onDeleteProject,
   onExportProjectZip,
   onImportProjectZip,
+  onImportLuaFiles,
   onApplyBundle,
   onAddFile,
   onDeleteFile,
   onRenameFile,
+  onApplyAICode,
   onCloseSidebar,
   fontSize,
   onChangeFontSize,
@@ -67,6 +74,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const zipInputRef = useRef<HTMLInputElement>(null);
+  const luaInputRef = useRef<HTMLInputElement>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
 
   // Group files by folder
@@ -117,9 +125,36 @@ export const VSExplorerSidebar: React.FC<Props> = ({
           {activeTab === 'explorer' && 'Explorer'}
           {activeTab === 'projects' && 'Projects Workspace'}
           {activeTab === 'settings' && 'Studio Settings'}
+          {activeTab === 'assistant' && 'AI Assistant'}
         </span>
 
         <div className="flex items-center gap-1">
+          {/* Mobile sidebar tab switcher (activity bar is desktop-only) */}
+          <div className="md:hidden flex items-center gap-0.5 mr-1 pr-1 border-r border-[#1b2030]">
+            {(
+              [
+                { id: 'explorer', icon: FolderTree, label: 'Explorer' },
+                { id: 'projects', icon: FolderKanban, label: 'Projects' },
+                { id: 'assistant', icon: Sparkles, label: 'AI Assistant' },
+                { id: 'settings', icon: Settings, label: 'Settings' },
+              ] as const
+            ).map((t) => {
+              const Icon = t.icon;
+              const isActive = activeTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => onSelectTab(t.id)}
+                  title={t.label}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    isActive ? 'bg-[#2a3350] text-white' : 'text-gray-500 hover:text-gray-200'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </button>
+              );
+            })}
+          </div>
           {activeTab === 'explorer' && (
             <>
               <button
@@ -136,6 +171,24 @@ export const VSExplorerSidebar: React.FC<Props> = ({
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
+              <button
+                onClick={() => luaInputRef.current?.click()}
+                className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2538] rounded"
+                title="Import .lua / .luau files from storage into this project"
+              >
+                <FileUp className="w-3.5 h-3.5" />
+              </button>
+              <input
+                ref={luaInputRef}
+                type="file"
+                accept=".lua,.luau"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) onImportLuaFiles(e.target.files);
+                  e.target.value = '';
+                }}
+              />
             </>
           )}
 
@@ -166,7 +219,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
           {/* Project Title Header */}
           <div className="px-2 py-1 mb-2 rounded-lg bg-[#141824] border border-[#21273a] flex items-center justify-between">
             <div className="flex items-center gap-1.5 truncate">
-              <FolderKanban className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <FolderKanban className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
               <span className="font-bold text-gray-200 truncate">{project.name}</span>
             </div>
             <span className="text-[10px] text-gray-400 font-mono shrink-0">
@@ -193,9 +246,9 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                       <ChevronDown className="w-3 h-3 shrink-0 text-gray-500" />
                     )}
                     {isCollapsed ? (
-                      <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <Folder className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                     ) : (
-                      <FolderOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <FolderOpen className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                     )}
                     <span className="font-semibold">{folderName}</span>
                   </div>
@@ -233,10 +286,10 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                             <span
                               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                 file.type === 'ModuleScript'
-                                  ? 'bg-amber-400'
+                                  ? 'bg-zinc-400'
                                   : file.type === 'ServerScript'
-                                  ? 'bg-blue-400'
-                                  : 'bg-emerald-400'
+                                  ? 'bg-zinc-400'
+                                  : 'bg-zinc-400'
                               }`}
                             />
 
@@ -252,7 +305,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                                 onBlur={() => handleSaveRename(file.id)}
                                 autoFocus
                                 onClick={(e) => e.stopPropagation()}
-                                className="bg-[#0b0c10] border border-blue-500 rounded px-1 py-0.2 text-[11px] text-white focus:outline-none w-full"
+                                className="bg-[#0b0c10] border border-zinc-500 rounded px-1 py-0.2 text-[11px] text-white focus:outline-none w-full"
                               />
                             ) : (
                               <span className="truncate">{file.name}</span>
@@ -274,7 +327,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                                     e.stopPropagation();
                                     onDeleteFile(file.id);
                                   }}
-                                  className="p-0.5 text-gray-400 hover:text-red-400"
+                                  className="p-0.5 text-gray-400 hover:text-zinc-400"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-2.5 h-2.5" />
@@ -295,7 +348,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
         <div className="p-2 border-t border-[#1a1f2e] md:hidden">
           <button
             onClick={() => onSelectTab('settings')}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-600/20 border border-violet-500/40 text-violet-200 text-xs font-bold"
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-600/20 border border-zinc-500/40 text-zinc-200 text-xs font-bold"
           >
             <Bot className="w-3.5 h-3.5" />
             Connect Muse Assistant
@@ -315,7 +368,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                 className="flex items-center gap-1 px-2.5 py-1 bg-[#1a2033] hover:bg-[#242c44] border border-[#2a3350] text-gray-200 rounded-lg text-xs font-semibold"
                 title="Import a .zip as a new project"
               >
-                <FileArchive className="w-3 h-3 text-cyan-400" />
+                <FileArchive className="w-3 h-3 text-zinc-400" />
                 <span>Import ZIP</span>
               </button>
               <input
@@ -331,7 +384,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
               />
               <button
                 onClick={onCreateNewProject}
-                className="flex items-center gap-1 px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold"
+                className="flex items-center gap-1 px-2.5 py-1 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg text-xs font-semibold"
               >
                 <Plus className="w-3 h-3" />
                 <span>New</span>
@@ -348,14 +401,14 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                   onClick={() => onSelectProject(proj.id)}
                   className={`p-3 rounded-xl border cursor-pointer transition-all ${
                     isCurrent
-                      ? 'bg-[#181d2c] border-red-500/50 shadow-md'
+                      ? 'bg-[#181d2c] border-zinc-500/50 shadow-md'
                       : 'bg-[#121520] border-[#222738] hover:border-[#31394f]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-bold text-gray-100 text-xs truncate">{proj.name}</span>
                     {isCurrent && (
-                      <span className="px-1.5 py-0.2 rounded bg-red-600/30 text-red-300 text-[10px] font-bold border border-red-500/30">
+                      <span className="px-1.5 py-0.2 rounded bg-zinc-600/30 text-zinc-300 text-[10px] font-bold border border-zinc-500/30">
                         Active
                       </span>
                     )}
@@ -369,7 +422,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                           e.stopPropagation();
                           onDeleteProject(proj.id);
                         }}
-                        className="text-gray-500 hover:text-red-400 font-sans"
+                        className="text-gray-500 hover:text-zinc-400 font-sans"
                       >
                         Delete
                       </button>
@@ -386,7 +439,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
               onClick={onExportProjectZip}
               className="w-full flex items-center justify-center gap-1.5 p-2 bg-[#171a26] hover:bg-[#202538] text-gray-200 border border-[#272d42] rounded-xl text-xs font-medium transition-colors"
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <Download className="w-3.5 h-3.5 text-zinc-400" />
               <span>Export {project.name} as ZIP</span>
             </button>
           </div>
@@ -405,7 +458,7 @@ export const VSExplorerSidebar: React.FC<Props> = ({
                 max="22"
                 value={fontSize}
                 onChange={(e) => onChangeFontSize(Number(e.target.value))}
-                className="w-full accent-red-600"
+                className="w-full accent-zinc-600"
               />
               <span className="font-mono text-gray-300 text-xs w-8">{fontSize}px</span>
             </div>
@@ -421,6 +474,13 @@ export const VSExplorerSidebar: React.FC<Props> = ({
           </div>
 
           <MuseConnect project={project} onApplyBundle={onApplyBundle} />
+        </div>
+      )}
+
+      {/* AI Assistant Content */}
+      {activeTab === 'assistant' && (
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0">
+          <AIAssistantPanel activeFile={project.files.find((f) => f.id === activeFileId)} onApplyCode={onApplyAICode} />
         </div>
       )}
     </div>

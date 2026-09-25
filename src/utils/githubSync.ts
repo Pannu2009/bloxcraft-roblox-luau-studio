@@ -33,6 +33,84 @@ export function clearGitHubConfig(projectId: string): void {
   localStorage.removeItem(storageKey(projectId));
 }
 
+// ---- GitHub Device Flow: one-time login, no manual token ----
+// The user creates a tiny OAuth App once (github.com/settings/developers),
+// pastes its Client ID here, then approves on github.com/login/device.
+// The resulting token is stored on-device exactly like a PAT.
+
+const OAUTH = 'https://github.com';
+const DEVICE_CLIENT_KEY = 'bloxcraft_github_device_client';
+
+export function loadDeviceClientId(): string {
+  try {
+    return localStorage.getItem(DEVICE_CLIENT_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function saveDeviceClientId(id: string): void {
+  try {
+    localStorage.setItem(DEVICE_CLIENT_KEY, id);
+  } catch {}
+}
+
+export interface DeviceCodeResponse {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  expiresIn: number;
+  interval: number;
+}
+
+/** Step 1: ask GitHub for a user code the user types at github.com/login/device. */
+export async function startDeviceFlow(clientId: string): Promise<DeviceCodeResponse> {
+  const res = await fetch(`${OAUTH}/login/device/code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ client_id: clientId.trim(), scope: 'repo' }),
+  });
+  let j: any = null;
+  try {
+    j = await res.json();
+  } catch {}
+  if (!res.ok || !j || j.error || !j.device_code) {
+    throw new Error(j?.error_description || j?.error || `GitHub rejected the Client ID (${res.status}).`);
+  }
+  return {
+    deviceCode: j.device_code,
+    userCode: j.user_code,
+    verificationUri: j.verification_uri || 'https://github.com/login/device',
+    expiresIn: j.expires_in || 900,
+    interval: j.interval || 5,
+  };
+}
+
+/**
+ * Step 2: single poll attempt. Resolves with the token once the user approves,
+ * throws an error with `code` = 'authorization_pending' | 'slow_down' |
+ * 'expired_token' | 'access_denied' while waiting / on failure.
+ */
+export async function pollDeviceToken(clientId: string, deviceCode: string): Promise<string> {
+  const res = await fetch(`${OAUTH}/login/oauth/access_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      client_id: clientId.trim(),
+      device_code: deviceCode,
+      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+    }),
+  });
+  let j: any = null;
+  try {
+    j = await res.json();
+  } catch {}
+  if (j?.access_token) return j.access_token as string;
+  const err: any = new Error(j?.error_description || 'Waiting for approval…');
+  err.code = j?.error || 'authorization_pending';
+  throw err;
+}
+
 async function gh(path: string, token: string, init?: RequestInit): Promise<any> {
   const res = await fetch(`${API}${path}`, {
     ...init,

@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Check,
   Workflow,
+  FolderX,
 } from 'lucide-react';
 import { ScriptFile, ScriptType, RobloxProject } from '../types/roblox';
 
@@ -20,6 +21,7 @@ interface Props {
   project: RobloxProject;
   projects: RobloxProject[];
   onSelectProject: (id: string) => void;
+  onCloseProject: () => void;
   onCreateNewProject: () => void;
   onExportProjectZip: () => void;
   scripts: ScriptFile[];
@@ -40,6 +42,7 @@ export const Navbar: React.FC<Props> = ({
   project,
   projects,
   onSelectProject,
+  onCloseProject,
   onCreateNewProject,
   onExportProjectZip,
   scripts,
@@ -74,13 +77,13 @@ export const Navbar: React.FC<Props> = ({
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-900/30 text-white font-extrabold text-xs sm:text-sm border border-red-400/30">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-zinc-500 to-zinc-700 flex items-center justify-center shadow-lg shadow-zinc-900/30 text-white font-extrabold text-xs sm:text-sm border border-zinc-400/30">
               <span>B</span>
             </div>
             <div className="hidden xs:block">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xs sm:text-sm text-white tracking-tight">BloxCraft AI</span>
-                <span className="px-1 py-0.2 rounded bg-red-600/30 text-red-400 border border-red-500/30 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider">
+                <span className="px-1 py-0.2 rounded bg-zinc-600/30 text-zinc-400 border border-zinc-500/30 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider">
                   Luau Studio
                 </span>
               </div>
@@ -93,7 +96,7 @@ export const Navbar: React.FC<Props> = ({
               onClick={() => setShowProjectDropdown(!showProjectDropdown)}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161a27] hover:bg-[#1e2436] text-gray-200 border border-[#272e42] rounded-xl text-xs font-semibold transition-colors"
             >
-              <FolderKanban className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <FolderKanban className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
               <span className="max-w-[110px] sm:max-w-[160px] truncate">{project.name}</span>
               <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
             </button>
@@ -113,12 +116,12 @@ export const Navbar: React.FC<Props> = ({
                       }}
                       className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
                         p.id === project.id
-                          ? 'bg-red-600/20 text-red-300 font-bold border border-red-500/30'
+                          ? 'bg-zinc-600/20 text-zinc-300 font-bold border border-zinc-500/30'
                           : 'text-gray-300 hover:bg-[#1d2334] hover:text-white'
                       }`}
                     >
                       <span className="truncate">{p.name}</span>
-                      {p.id === project.id && <Check className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+                      {p.id === project.id && <Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" />}
                     </button>
                   ))}
                 </div>
@@ -129,7 +132,7 @@ export const Navbar: React.FC<Props> = ({
                       onCreateNewProject();
                       setShowProjectDropdown(false);
                     }}
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg text-xs font-semibold transition-colors"
                   >
                     <Plus className="w-3 h-3" />
                     <span>New Project</span>
@@ -142,7 +145,17 @@ export const Navbar: React.FC<Props> = ({
                     className="p-1.5 text-gray-300 hover:text-white hover:bg-[#20273a] rounded-lg border border-[#272f44]"
                     title="Export Rojo ZIP"
                   >
-                    <Download className="w-3.5 h-3.5 text-cyan-400" />
+                    <Download className="w-3.5 h-3.5 text-zinc-400" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onCloseProject();
+                      setShowProjectDropdown(false);
+                    }}
+                    className="p-1.5 text-gray-300 hover:text-white hover:bg-[#20273a] rounded-lg border border-[#272f44]"
+                    title="Close project (back to start screen)"
+                  >
+                    <FolderX className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -159,10 +172,10 @@ export const Navbar: React.FC<Props> = ({
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
-              <FileCode className="w-3.5 h-3.5 text-blue-400" />
+              <FileCode className="w-3.5 h-3.5 text-zinc-400" />
               <span>Editor & Debugger</span>
               {issueCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-red-500/20 text-red-300 font-bold border border-red-500/30">
+                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-zinc-500/20 text-zinc-300 font-bold border border-zinc-500/30">
                   {issueCount}
                 </span>
               )}
@@ -176,7 +189,7 @@ export const Navbar: React.FC<Props> = ({
                   : 'text-gray-400 hover:text-gray-200'
               }`}
             >
-              <Workflow className="w-3.5 h-3.5 text-violet-400" />
+              <Workflow className="w-3.5 h-3.5 text-zinc-400" />
               <span>Wiring</span>
             </button>
           </div>
@@ -188,10 +201,10 @@ export const Navbar: React.FC<Props> = ({
           <a
             href="/api/download-app-zip"
             download="bloxcraft-roblox-studio-v1.1.zip"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-300 hover:text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition-all shadow-xs"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-600/25 hover:bg-zinc-600/40 text-zinc-300 hover:text-white border border-zinc-500/40 rounded-xl text-xs font-bold transition-all shadow-xs"
             title="Download full BloxCraft application codebase ZIP (v1.1) to upload to GitHub"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <Download className="w-3.5 h-3.5 text-zinc-400" />
             <span>App v1.1 ZIP</span>
           </a>
 
@@ -201,7 +214,7 @@ export const Navbar: React.FC<Props> = ({
             className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-[#171a26] hover:bg-[#202538] text-gray-300 hover:text-white border border-[#272d42] rounded-xl text-xs font-medium transition-colors"
             title="Download current Roblox project scripts as Rojo ZIP"
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden lg:inline">Rojo ZIP</span>
           </button>
 
@@ -211,7 +224,7 @@ export const Navbar: React.FC<Props> = ({
             className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-[#171a26] hover:bg-[#202538] text-gray-300 hover:text-white border border-[#272d42] rounded-xl text-xs font-medium transition-colors"
             title="Roblox Studio Explorer placement guide"
           >
-            <FolderTree className="w-3.5 h-3.5 text-amber-400" />
+            <FolderTree className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden lg:inline">Studio Guide</span>
           </button>
 
@@ -221,7 +234,7 @@ export const Navbar: React.FC<Props> = ({
             className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-[#171a26] hover:bg-[#202538] text-gray-300 hover:text-white border border-[#272d42] rounded-xl text-xs font-medium transition-colors"
             title="Command panel (Ctrl+Shift+P)"
           >
-            <Command className="w-3.5 h-3.5 text-violet-400" />
+            <Command className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden lg:inline">Commands</span>
           </button>
 
@@ -230,12 +243,12 @@ export const Navbar: React.FC<Props> = ({
             onClick={onToggleConsole}
             className={`hidden sm:flex items-center gap-1 px-2.5 py-1.5 border rounded-xl text-xs font-medium transition-colors ${
               isConsoleOpen
-                ? 'bg-[#23293e] text-white border-blue-500/40'
+                ? 'bg-[#23293e] text-white border-zinc-500/40'
                 : 'bg-[#171a26] hover:bg-[#202538] text-gray-300 hover:text-white border-[#272d42]'
             }`}
             title="Toggle Output Window"
           >
-            <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+            <Terminal className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden lg:inline">Output</span>
           </button>
 
@@ -261,10 +274,10 @@ export const Navbar: React.FC<Props> = ({
                 <span
                   className={`w-2 h-2 rounded-full shrink-0 ${
                     script.type === 'ModuleScript'
-                      ? 'bg-amber-400'
+                      ? 'bg-zinc-400'
                       : script.type === 'ServerScript'
-                      ? 'bg-blue-400'
-                      : 'bg-emerald-400'
+                      ? 'bg-zinc-400'
+                      : 'bg-zinc-400'
                   }`}
                 />
 
@@ -275,6 +288,7 @@ export const Navbar: React.FC<Props> = ({
                 {scripts.length > 1 && (
                   <button
                     onClick={(e) => onCloseScript(script.id, e)}
+                    title="Close tab (file stays in project)"
                     className="p-0.5 rounded text-gray-500 hover:text-white hover:bg-[#262c40] transition-colors"
                   >
                     <X className="w-3 h-3" />

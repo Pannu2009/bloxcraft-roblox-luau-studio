@@ -21,6 +21,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'Using legacy global wait() causes 30Hz pipeline throttling and potential frame drops.',
         robloxGotcha: 'Global wait() runs on the legacy 30Hz scheduler. task.wait() runs on the modern Task Scheduler synchronized with Heartbeat at 60Hz+.',
         suggestedFix: line.replace(/\bwait\s*\(/g, 'task.wait('),
+        fixKind: 'line-replace',
       });
     }
 
@@ -34,6 +35,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'Global spawn() introduces an artificial delay (up to two frames or 1/30th sec) before executing.',
         robloxGotcha: 'spawn() does not execute immediately. Use task.spawn() or task.defer() which guarantees immediate or deferred execution on the modern scheduler.',
         suggestedFix: line.replace(/\bspawn\s*\(/g, 'task.spawn('),
+        fixKind: 'line-replace',
       });
     }
 
@@ -47,6 +49,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'Use task.delay(seconds, function) for accurate task scheduler timing.',
         robloxGotcha: 'Legacy delay() can drift significantly under high server or client workload.',
         suggestedFix: line.replace(/\bdelay\s*\(/g, 'task.delay('),
+        fixKind: 'line-replace',
       });
     }
 
@@ -60,6 +63,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: ':Remove() does not disconnect active RBXScriptConnections or unlock memory, causing memory leaks.',
         robloxGotcha: ':Destroy() disconnects all connections, sets Parent to nil, and marks the instance as destroyed. :Remove() is deprecated since 2012.',
         suggestedFix: line.replace(/:\s*remove\s*\(/gi, ':Destroy('),
+        fixKind: 'line-replace',
       });
     }
 
@@ -115,6 +119,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'Roblox standardized on PascalCase :Connect() for RBXScriptSignal.',
         robloxGotcha: ':connect is a legacy alias kept for backward compatibility but deprecated in modern Luau.',
         suggestedFix: line.replace(/:\s*connect\s*\(/g, ':Connect('),
+        fixKind: 'line-replace',
       });
     }
 
@@ -141,6 +146,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'If the target child never loads or is renamed, the script hangs forever with "Infinite yield possible on...".',
         robloxGotcha: 'Pass a 2nd argument (e.g. 5 or 10 seconds timeout) to safely prevent permanent thread lockup if an instance fails to stream in.',
         suggestedFix: line.replace(/(:\s*WaitForChild\s*\(\s*["'][^"']+["'])\s*\)/, '$1, 5)'),
+        fixKind: 'line-replace',
       });
     }
 
@@ -172,6 +178,7 @@ export function runInstantRobloxLint(code: string, scriptType: ScriptType): Robl
         description: 'Roblox ModuleScripts require returning exactly one value (usually a table). Without this, require() throws an error: "Module code did not return exactly one value".',
         robloxGotcha: 'A ModuleScript that does not end with `return Module` fails immediately upon require().',
         suggestedFix: 'return Module',
+        fixKind: 'append',
       });
     }
   }

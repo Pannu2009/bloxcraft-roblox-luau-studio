@@ -83,13 +83,13 @@ export const UstaadApplyModal: React.FC<Props> = ({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={'Paste the bundle here…\n\n# BloxCraft project bundle\n# Project: …\n### FILE: src/server/Main.luau [ServerScript]\n```luau\n…'}
-                className="w-full h-48 p-3 rounded-xl bg-[#0a0c12] border border-[#23283b] text-xs font-mono text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-violet-500/60 resize-y"
+                className="w-full h-48 p-3 rounded-xl bg-[#0a0c12] border border-[#23283b] text-xs font-mono text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-zinc-500/60 resize-y"
               />
-              {error && <p className="text-xs text-red-300">{error}</p>}
+              {error && <p className="text-xs text-zinc-300">{error}</p>}
               <button
                 onClick={handleParse}
                 disabled={!text.trim()}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold disabled:opacity-40 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-600 hover:bg-zinc-500 text-white text-sm font-bold disabled:opacity-40 transition-colors"
               >
                 <ClipboardPaste className="w-4 h-4" />
                 Read bundle
@@ -100,8 +100,8 @@ export const UstaadApplyModal: React.FC<Props> = ({
               <div
                 className={`flex items-start gap-2 p-3 rounded-xl border text-[11px] ${
                   bundleMatchesThisApp(parsed)
-                    ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
-                    : 'bg-amber-950/30 border-amber-500/30 text-amber-200'
+                    ? 'bg-zinc-950/30 border-zinc-500/30 text-zinc-200'
+                    : 'bg-zinc-950/30 border-zinc-500/30 text-zinc-200'
                 }`}
               >
                 {bundleMatchesThisApp(parsed) ? (
@@ -130,16 +130,16 @@ export const UstaadApplyModal: React.FC<Props> = ({
                       className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0a0c12] border border-[#1e2336]"
                     >
                       {update ? (
-                        <FileCode className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <FileCode className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                       ) : (
-                        <FilePlus2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <FilePlus2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                       )}
                       <span className="text-xs font-mono text-gray-200 truncate flex-1">
                         {f.folder}/{f.name}
                       </span>
                       <span
                         className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                          update ? 'bg-amber-500/15 text-amber-300' : 'bg-emerald-500/15 text-emerald-300'
+                          update ? 'bg-zinc-500/15 text-zinc-300' : 'bg-zinc-500/15 text-zinc-300'
                         }`}
                       >
                         {update ? 'UPDATE' : 'NEW'}
@@ -158,7 +158,7 @@ export const UstaadApplyModal: React.FC<Props> = ({
                 </button>
                 <button
                   onClick={handleApply}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-zinc-600 hover:bg-zinc-500 text-white text-sm font-bold transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Apply to project

@@ -39,7 +39,7 @@ export const NewProjectModal: React.FC<Props> = ({ isOpen, onClose, onCreateProj
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#222738] bg-[#161924]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400">
+            <div className="w-9 h-9 rounded-lg bg-zinc-600/20 border border-zinc-500/30 flex items-center justify-center text-zinc-400">
               <FolderPlus className="w-5 h-5" />
             </div>
             <div>
@@ -69,10 +69,10 @@ export const NewProjectModal: React.FC<Props> = ({ isOpen, onClose, onCreateProj
                 setError('');
               }}
               placeholder="e.g. DungeonCrawler, CyberTycoon, TowerDefense"
-              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-red-500/50"
+              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-zinc-500/50"
               autoFocus
             />
-            {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+            {error && <p className="text-xs text-zinc-400 mt-1">{error}</p>}
           </div>
 
           <div>
@@ -84,7 +84,7 @@ export const NewProjectModal: React.FC<Props> = ({ isOpen, onClose, onCreateProj
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Multiplayer combat with DataStore saves and customizable weapons"
-              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-red-500/50"
+              className="w-full bg-[#0d0f17] border border-[#262c40] rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-500 focus:outline-none focus:border-zinc-500/50"
             />
           </div>
 
@@ -101,7 +101,7 @@ export const NewProjectModal: React.FC<Props> = ({ isOpen, onClose, onCreateProj
                     onClick={() => setSelectedTemplate(tmpl.id)}
                     className={`p-3 rounded-xl border cursor-pointer transition-all ${
                       isSelected
-                        ? 'bg-red-950/20 border-red-500/50 shadow-md ring-1 ring-red-500/30'
+                        ? 'bg-zinc-950/20 border-zinc-500/50 shadow-md ring-1 ring-zinc-500/30'
                         : 'bg-[#151926] border-[#222738] hover:border-[#2f374e]'
                     }`}
                   >
@@ -132,7 +132,7 @@ export const NewProjectModal: React.FC<Props> = ({ isOpen, onClose, onCreateProj
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-red-900/30 transition-all flex items-center gap-1.5"
+              className="px-5 py-2 bg-zinc-600 hover:bg-zinc-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-zinc-900/30 transition-all flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Create Project</span>

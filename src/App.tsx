@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { SquareTerminal } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { VSActivityBar } from './components/VSActivityBar';
 import { VSExplorerSidebar } from './components/VSExplorerSidebar';
@@ -23,7 +24,7 @@ import {
 } from './utils/githubSync';
 import { runInstantRobloxLint } from './utils/robloxLinter';
 import { exportProjectAsZip } from './utils/projectZipExport';
-import { importProjectFromZip } from './utils/projectZipImport';
+import { importProjectFromZip, guessScriptType, suggestedPlacementFor } from './utils/projectZipImport';
 import {
   PROJECT_TEMPLATES,
 } from './data/projectTemplates';
@@ -73,13 +74,37 @@ export default function App() {
     return activeProject?.files[0]?.id || '';
   });
 
-  // Keep activeFileId valid if project changes
+  // Open editor tabs (X on a tab closes the tab — it never deletes the file)
+  const [openFileIds, setOpenFileIds] = useState<string[]>(() => {
+    const first = activeProject?.files[0]?.id;
+    return first ? [first] : [];
+  });
+
+  // Open a script: make it active and ensure it has a tab
+  const openScript = (id: string) => {
+    setActiveFileId(id);
+    setOpenFileIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  // Keep activeFileId and open tabs valid if project changes
   useEffect(() => {
-    if (!activeProject) return;
-    if (!activeProject.files.some((f) => f.id === activeFileId)) {
-      setActiveFileId(activeProject.files[0]?.id || '');
+    if (!activeProject) {
+      setOpenFileIds([]);
+      return;
     }
-  }, [activeProject, activeFileId]);
+    if (!activeProject.files.some((f) => f.id === activeFileId)) {
+      const first = activeProject.files[0]?.id || '';
+      setActiveFileId(first);
+      setOpenFileIds(first ? [first] : []);
+    } else {
+      setOpenFileIds((prev) => {
+        const valid = prev.filter((id) => activeProject.files.some((f) => f.id === id));
+        if (valid.length === 0 && activeFileId) return [activeFileId];
+        if (!valid.includes(activeFileId) && activeFileId) valid.push(activeFileId);
+        return valid;
+      });
+    }
+  }, [activeProject?.id]);
 
   // Save projects to localStorage
   useEffect(() => {
@@ -95,6 +120,13 @@ export default function App() {
     if (!activeProject) return undefined;
     return activeProject.files.find((f) => f.id === activeFileId) || activeProject.files[0];
   }, [activeProject?.files, activeFileId]);
+
+  // Files currently open as editor tabs (in tab order)
+  const openFiles = useMemo(() => {
+    if (!activeProject) return [];
+    const byId = new Map(activeProject.files.map((f) => [f.id, f]));
+    return openFileIds.map((id) => byId.get(id)).filter(Boolean) as typeof activeProject.files;
+  }, [activeProject?.files, openFileIds]);
 
   // 2. UI Layout State (VS Code + Mobile)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -116,6 +148,7 @@ export default function App() {
   const [githubCfg, setGithubCfg] = useState<GitHubConfig | null>(null);
   const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null);
   const cmdZipRef = React.useRef<HTMLInputElement>(null);
+  const cmdLuaRef = React.useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string, kind: 'ok' | 'err' = 'ok') => {
     setToast({ msg, kind });
@@ -176,17 +209,25 @@ export default function App() {
     );
   };
 
-  // Close script tab
-  const handleCloseScript = (id: string, e: React.MouseEvent) => {
+  // Close a script TAB (never deletes the file — the file stays in the project)
+  const handleCloseTab = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (activeProject.files.length <= 1) return;
-    const remaining = activeProject.files.filter((f) => f.id !== id);
-    setProjects((prev) =>
-      prev.map((proj) => (proj.id === activeProject.id ? { ...proj, files: remaining } : proj))
-    );
-    if (activeFileId === id) {
-      setActiveFileId(remaining[0].id);
-    }
+    setOpenFileIds((prev) => {
+      if (prev.length <= 1) return prev; // keep at least one tab open
+      const next = prev.filter((f) => f !== id);
+      if (activeFileId === id) {
+        const closedIdx = prev.indexOf(id);
+        setActiveFileId(next[Math.min(closedIdx, next.length - 1)]);
+      }
+      return next;
+    });
+  };
+
+  // Close the current project (back to the welcome screen; project is kept)
+  const handleCloseProject = () => {
+    setActiveProjectId('');
+    setActiveFileId('');
+    setOpenFileIds([]);
   };
 
   // Create new project
@@ -207,7 +248,9 @@ export default function App() {
 
     setProjects((prev) => [newProj, ...prev]);
     setActiveProjectId(newProj.id);
-    setActiveFileId(newProj.files[0]?.id || '');
+    const firstId = newProj.files[0]?.id || '';
+    setActiveFileId(firstId);
+    setOpenFileIds(firstId ? [firstId] : []);
     setActiveSidebarTab('explorer');
     setIsSidebarOpen(true);
   };
@@ -218,8 +261,10 @@ export default function App() {
     setProjects(nextProjects);
     if (activeProjectId === projectId) {
       const next = nextProjects[0];
+      const firstId = next?.files[0]?.id || '';
       setActiveProjectId(next?.id || '');
-      setActiveFileId(next?.files[0]?.id || '');
+      setActiveFileId(firstId);
+      setOpenFileIds(firstId ? [firstId] : []);
     }
   };
 
@@ -268,7 +313,9 @@ export default function App() {
       const proj = await importProjectFromZip(zipFile);
       setProjects((prev) => [proj, ...prev]);
       setActiveProjectId(proj.id);
-      setActiveFileId(proj.files[0]?.id || '');
+      const firstId = proj.files[0]?.id || '';
+      setActiveFileId(firstId);
+      setOpenFileIds(firstId ? [firstId] : []);
       setActiveSidebarTab('explorer');
       setIsSidebarOpen(true);
     } catch (e: any) {
@@ -318,7 +365,7 @@ export default function App() {
           : proj
       )
     );
-    setActiveFileId(newFile.id);
+    openScript(newFile.id);
   };
 
   // Rename file
@@ -335,28 +382,67 @@ export default function App() {
     );
   };
 
-  // Delete file
+  // Delete file (explicit action only — always confirms; never from the tab X)
   const handleDeleteFile = (fileId: string) => {
     if (activeProject.files.length <= 1) return;
+    const file = activeProject.files.find((f) => f.id === fileId);
+    if (!window.confirm(`Delete "${file?.name || 'this file'}" from the project? This cannot be undone.`)) {
+      return;
+    }
     const remaining = activeProject.files.filter((f) => f.id !== fileId);
     setProjects((prev) =>
       prev.map((proj) => (proj.id === activeProject.id ? { ...proj, files: remaining } : proj))
     );
+    setOpenFileIds((prev) => prev.filter((f) => f !== fileId));
     if (activeFileId === fileId) {
-      setActiveFileId(remaining[0].id);
+      const nextId = remaining[0].id;
+      setActiveFileId(nextId);
+      setOpenFileIds((prev) => (prev.includes(nextId) ? prev : [nextId, ...prev]));
     }
   };
 
-  // Apply a local quick-fix for a linter issue (no AI)
+  // Apply a local quick-fix for a linter issue (no AI) — actually rewrites the code
   const handleApplySingleFix = (issue: RobloxIssue) => {
     if (!issue.suggestedFix || !activeScript) return;
-    if (issue.title.includes('Missing "return Module"')) {
-      handleCodeChange(`${activeScript.code.trimEnd()}\n\nreturn ${activeScript.name.replace('.luau', '')}\n`);
+    if (issue.fixKind === 'append' || issue.title.includes('Missing "return Module"')) {
+      const modName = activeScript.name.replace(/\.lua[u]?$/, '').replace(/[^A-Za-z0-9_]/g, '_') || 'Module';
+      handleCodeChange(`${activeScript.code.trimEnd()}\n\nreturn ${modName}\n`);
+      showToast('Added the missing return statement.');
       return;
     }
-    if (issue.title.includes('--!strict')) {
-      handleCodeChange(`--!strict\n${activeScript.code}`);
+    if (issue.fixKind === 'line-replace' && issue.line > 0) {
+      const lines = activeScript.code.split('\n');
+      if (issue.line <= lines.length) {
+        lines[issue.line - 1] = issue.suggestedFix;
+        handleCodeChange(lines.join('\n'));
+        showToast(`Fixed: ${issue.title}`);
+      }
       return;
+    }
+    showToast('This one needs a manual edit — see the suggested fix.', 'err');
+  };
+
+  // Apply every auto-fixable issue in the active file at once (line swaps don't shift lines)
+  const handleApplyAllFixes = () => {
+    if (!activeScript) return;
+    const lines = activeScript.code.split('\n');
+    let count = 0;
+    combinedIssues.forEach((issue) => {
+      if (issue.fixKind === 'line-replace' && issue.line > 0 && issue.line <= lines.length) {
+        lines[issue.line - 1] = issue.suggestedFix;
+        count++;
+      }
+    });
+    let code = lines.join('\n');
+    const needsReturn = combinedIssues.some((i) => i.fixKind === 'append');
+    if (needsReturn) {
+      const modName = activeScript.name.replace(/\.lua[u]?$/, '').replace(/[^A-Za-z0-9_]/g, '_') || 'Module';
+      code = `${code.trimEnd()}\n\nreturn ${modName}\n`;
+      count++;
+    }
+    if (count > 0) {
+      handleCodeChange(code);
+      showToast(`Applied ${count} automatic fix${count > 1 ? 'es' : ''}.`);
     }
   };
 
@@ -366,10 +452,49 @@ export default function App() {
     setMobileTab('console');
   };
 
+  // Import individual .lua/.luau files from device storage into the CURRENT project
+  const handleImportLuaFiles = async (fileList: FileList | File[]) => {
+    if (!activeProject) return;
+    const picked = Array.from(fileList).filter((f) => /\.lua[u]?$/i.test(f.name));
+    if (picked.length === 0) {
+      showToast('No .lua or .luau files selected.', 'err');
+      return;
+    }
+    const now = Date.now();
+    const newFiles: ScriptFile[] = [];
+    for (let i = 0; i < picked.length; i++) {
+      const f = picked[i];
+      const code = await f.text();
+      // webkitRelativePath keeps folder structure when a folder is picked
+      const relPath = (f as any).webkitRelativePath || f.name;
+      const { type, folder } = guessScriptType(relPath);
+      newFiles.push({
+        id: `f-lua-${now}-${i}`,
+        name: f.name,
+        type,
+        folder,
+        code,
+        suggestedPlacement: suggestedPlacementFor(type),
+      });
+    }
+    setProjects((prev) =>
+      prev.map((proj) =>
+        proj.id === activeProject.id
+          ? { ...proj, updatedAt: now, files: [...proj.files, ...newFiles] }
+          : proj
+      )
+    );
+    openScript(newFiles[0].id);
+    setActiveSidebarTab('explorer');
+    showToast(`Imported ${newFiles.length} script${newFiles.length > 1 ? 's' : ''} into ${activeProject.name}.`);
+  };
+
   // ---- Command panel ----
   const commands: Command[] = [
     { id: 'new-project', title: 'New Project', group: 'Project', hint: 'start blank' },
+    { id: 'close-project', title: 'Close Project', group: 'Project', hint: 'back to start' },
     { id: 'import-zip', title: 'Import Project from ZIP', group: 'Project', hint: '.zip' },
+    { id: 'import-lua', title: 'Import .lua Files from Storage', group: 'Project', hint: 'into this project' },
     { id: 'export-zip', title: 'Export Project as ZIP', group: 'Project', hint: 'rojo' },
     {
       id: 'github-connect',
@@ -446,8 +571,14 @@ export default function App() {
       case 'new-project':
         setIsNewProjectOpen(true);
         break;
+      case 'close-project':
+        handleCloseProject();
+        break;
       case 'import-zip':
         cmdZipRef.current?.click();
+        break;
+      case 'import-lua':
+        cmdLuaRef.current?.click();
         break;
       case 'export-zip':
         handleExportProjectZip();
@@ -520,17 +651,22 @@ export default function App() {
         onSelectProject={(id) => {
           setActiveProjectId(id);
           const p = projects.find((x) => x.id === id);
-          if (p && p.files.length > 0) setActiveFileId(p.files[0].id);
+          const firstId = p?.files[0]?.id || '';
+          if (p && p.files.length > 0) {
+            setActiveFileId(firstId);
+            setOpenFileIds([firstId]);
+          }
         }}
+        onCloseProject={handleCloseProject}
         onCreateNewProject={() => setIsNewProjectOpen(true)}
         onExportProjectZip={handleExportProjectZip}
-        scripts={activeProject.files}
+        scripts={openFiles}
         activeScriptId={activeFileId}
         onSelectScript={(id) => {
-          setActiveFileId(id);
+          openScript(id);
           setMobileTab('editor');
         }}
-        onCloseScript={handleCloseScript}
+        onCloseScript={handleCloseTab}
         onOpenGuide={() => setIsGuideOpen(true)}
         onToggleConsole={() => setIsConsoleOpen(!isConsoleOpen)}
         onOpenCommands={() => setCommandOpen(true)}
@@ -571,19 +707,25 @@ export default function App() {
               projects={projects}
               activeFileId={activeFileId}
               onSelectFile={(id) => {
-                setActiveFileId(id);
+                openScript(id);
                 setMobileTab('editor');
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }}
               onSelectProject={(id) => {
                 setActiveProjectId(id);
                 const p = projects.find((x) => x.id === id);
-                if (p && p.files.length > 0) setActiveFileId(p.files[0].id);
+                const firstId = p?.files[0]?.id || '';
+                if (p && p.files.length > 0) {
+                  setActiveFileId(firstId);
+                  setOpenFileIds([firstId]);
+                }
               }}
               onCreateNewProject={() => setIsNewProjectOpen(true)}
               onDeleteProject={handleDeleteProject}
               onExportProjectZip={handleExportProjectZip}
               onImportProjectZip={handleImportProjectZip}
+              onImportLuaFiles={handleImportLuaFiles}
+              onApplyAICode={handleCodeChange}
               onApplyBundle={handleApplyUstaadBundle}
               onAddFile={(folder) => {
                 setNewFileDefaultFolder(folder || 'src/shared');
@@ -646,6 +788,7 @@ export default function App() {
                 <DebuggerPanel
                   issues={combinedIssues}
                   onApplySingleFix={handleApplySingleFix}
+                  onApplyAllFixes={handleApplyAllFixes}
                   scriptType={activeScript?.type || 'ModuleScript'}
                 />
               </div>
@@ -657,7 +800,7 @@ export default function App() {
                 <WiringDiagram
                   files={activeProject.files}
                   onSelectFile={(id) => {
-                    setActiveFileId(id);
+                    openScript(id);
                     setActiveView('editor');
                     setMobileTab('editor');
                   }}
@@ -707,8 +850,16 @@ export default function App() {
           }
         }}
         issueCount={combinedIssues.length}
-        onOpenCommands={() => setCommandOpen(true)}
       />
+
+      {/* Floating command button (mobile only — commands moved out of the bottom nav) */}
+      <button
+        onClick={() => setCommandOpen(true)}
+        title="Commands"
+        className="md:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-[#21273b] border border-[#2c334b] text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+      >
+        <SquareTerminal className="w-5 h-5" />
+      </button>
 
       {/* Modals & Slide-ins */}
       <NewProjectModal
@@ -770,13 +921,26 @@ export default function App() {
         }}
       />
 
+      {/* Hidden .lua picker for the command panel */}
+      <input
+        ref={cmdLuaRef}
+        type="file"
+        accept=".lua,.luau"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) handleImportLuaFiles(e.target.files);
+          e.target.value = '';
+        }}
+      />
+
       {/* Toast */}
       {toast && (
         <div
           className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl border max-w-[90vw] text-center ${
             toast.kind === 'ok'
-              ? 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200'
-              : 'bg-red-950/95 border-red-500/40 text-red-200'
+              ? 'bg-zinc-950/95 border-zinc-500/40 text-zinc-200'
+              : 'bg-zinc-950/95 border-zinc-500/40 text-zinc-200'
           }`}
         >
           {toast.msg}

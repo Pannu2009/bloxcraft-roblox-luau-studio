@@ -172,7 +172,36 @@ export function buildProjectBundle(project: RobloxProject): string {
   return lines.join('\n');
 }
 
-export type ShareOutcome = 'shared' | 'copied' | 'failed';
+export type ShareOutcome = 'shared' | 'copied' | 'downloaded' | 'failed';
+
+// Share the bundle as a .txt FILE (via the OS share sheet) so it never
+// floods the phone's clipboard. Falls back to downloading the file.
+export async function shareProjectBundleAsFile(project: RobloxProject): Promise<ShareOutcome> {
+  const text = buildProjectBundle(project);
+  const safeName = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
+  const fileName = `bloxcraft-${safeName}.txt`;
+  try {
+    const file = new File([text], fileName, { type: 'text/plain' });
+    const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
+    if (navigator.share && nav.canShare && nav.canShare({ files: [file] })) {
+      await navigator.share({ title: `BloxCraft: ${project.name}`, files: [file] });
+      return 'shared';
+    }
+    // No file-share support: download it so the user can attach it manually.
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 8000);
+    return 'downloaded';
+  } catch (e: any) {
+    if (e?.name === 'AbortError') return 'failed'; // user cancelled the sheet
+    return 'failed';
+  }
+}
 
 /** Share the bundle via the OS share sheet, falling back to clipboard. */
 export async function shareProjectBundle(project: RobloxProject): Promise<ShareOutcome> {

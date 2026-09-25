@@ -10,6 +10,7 @@ import {
   isIntroduced,
   setIntroduced,
   shareProjectBundle,
+  shareProjectBundleAsFile,
   type BundleFile,
 } from '../utils/museLink';
 import { UstaadApplyModal } from './UstaadApplyModal';
@@ -24,7 +25,7 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
   const [introduced, setIntroducedState] = useState(isIntroduced());
   const [copied, setCopied] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
-  const [shareState, setShareState] = useState<'idle' | 'working' | 'shared' | 'copied' | 'failed'>('idle');
+  const [shareState, setShareState] = useState<'idle' | 'working' | 'shared' | 'downloaded' | 'copied' | 'failed'>('idle');
 
   const copyCode = async () => {
     try {
@@ -36,11 +37,20 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  // Primary: share the bundle as a .txt file (never touches the clipboard)
   const onShare = async () => {
+    setShareState('working');
+    const outcome = await shareProjectBundleAsFile(project);
+    setShareState(outcome === 'shared' ? 'shared' : outcome === 'downloaded' ? 'downloaded' : 'failed');
+    setTimeout(() => setShareState('idle'), 5000);
+  };
+
+  // Fallback: copy the bundle text (for chat apps that can't take a file)
+  const onCopyText = async () => {
     setShareState('working');
     const outcome = await shareProjectBundle(project);
     setShareState(outcome === 'shared' ? 'shared' : outcome === 'copied' ? 'copied' : 'failed');
-    setTimeout(() => setShareState('idle'), 4000);
+    setTimeout(() => setShareState('idle'), 5000);
   };
 
   const toggleIntroduced = () => {
@@ -52,7 +62,7 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
   return (
     <div className="p-3 rounded-xl bg-[#121520] border border-[#2a3350] space-y-3">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-zinc-600 to-zinc-500 flex items-center justify-center shrink-0">
           <Bot className="w-4 h-4 text-white" />
         </div>
         <div className="min-w-0">
@@ -62,8 +72,8 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
         <span
           className={`ml-auto shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
             introduced
-              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              ? 'bg-zinc-500/15 border-zinc-500/40 text-zinc-300'
+              : 'bg-zinc-500/10 border-zinc-500/30 text-zinc-300'
           }`}
         >
           {introduced ? 'Linked' : 'Not linked'}
@@ -80,7 +90,7 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
           Your pairing code
         </div>
         <div className="flex items-center gap-2">
-          <code className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0a0c12] border border-[#23283b] text-sm font-mono font-bold text-cyan-300 tracking-widest text-center">
+          <code className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0a0c12] border border-[#23283b] text-sm font-mono font-bold text-zinc-300 tracking-widest text-center">
             {code}
           </code>
           <button
@@ -88,7 +98,7 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
             className="p-2 rounded-lg bg-[#1a2033] hover:bg-[#242c44] text-gray-200 transition-colors"
             title="Copy pairing code"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-zinc-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
         <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
@@ -102,7 +112,7 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
         className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-colors ${
           introduced
             ? 'bg-[#1a2033] border-[#2a3350] text-gray-300 hover:bg-[#222a40]'
-            : 'bg-violet-600/25 border-violet-500/40 text-violet-200 hover:bg-violet-600/40'
+            : 'bg-zinc-600/25 border-zinc-500/40 text-zinc-200 hover:bg-zinc-600/40'
         }`}
       >
         {introduced ? <Unlink className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
@@ -117,30 +127,42 @@ export const MuseConnect: React.FC<Props> = ({ project, onApplyBundle }) => {
         <button
           onClick={onShare}
           disabled={shareState === 'working'}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cyan-600/25 border border-cyan-500/40 text-cyan-200 text-xs font-bold hover:bg-cyan-600/40 disabled:opacity-50 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-600/25 border border-zinc-500/40 text-zinc-200 text-xs font-bold hover:bg-zinc-600/40 disabled:opacity-50 transition-colors"
         >
           <Share2 className="w-3.5 h-3.5" />
           {shareState === 'working' ? 'Preparing…' : 'Send project to Ustaad'}
         </button>
         <button
+          onClick={onCopyText}
+          disabled={shareState === 'working'}
+          className="w-full mt-1.5 text-[10px] text-gray-500 hover:text-gray-300 underline underline-offset-2 disabled:opacity-50"
+        >
+          or copy the bundle text instead
+        </button>
+        <button
           onClick={() => setApplyOpen(true)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 mt-2 rounded-xl bg-violet-600/25 border border-violet-500/40 text-violet-200 text-xs font-bold hover:bg-violet-600/40 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 mt-2 rounded-xl bg-zinc-600/25 border border-zinc-500/40 text-zinc-200 text-xs font-bold hover:bg-zinc-600/40 transition-colors"
         >
           <ClipboardPaste className="w-3.5 h-3.5" />
           Apply Ustaad's edits
         </button>
         {shareState === 'shared' && (
-          <p className="text-[10px] text-emerald-300 mt-1.5 flex items-center gap-1">
-            <Check className="w-3 h-3" /> Shared — pick Muse in the share sheet.
+          <p className="text-[10px] text-zinc-300 mt-1.5 flex items-center gap-1">
+            <Check className="w-3 h-3" /> Shared as a file — pick Muse in the share sheet and send the .txt.
+          </p>
+        )}
+        {shareState === 'downloaded' && (
+          <p className="text-[10px] text-zinc-300 mt-1.5">
+            Share sheet unavailable — the bundle downloaded as a .txt file. Attach it to Ustaad in chat.
           </p>
         )}
         {shareState === 'copied' && (
-          <p className="text-[10px] text-amber-300 mt-1.5">
+          <p className="text-[10px] text-zinc-300 mt-1.5">
             Share sheet unavailable — bundle copied to clipboard. Paste it to Ustaad in chat.
           </p>
         )}
         {shareState === 'failed' && (
-          <p className="text-[10px] text-red-300 mt-1.5">
+          <p className="text-[10px] text-zinc-300 mt-1.5">
             Couldn't share or copy. Try again, or use Export ZIP.
           </p>
         )}

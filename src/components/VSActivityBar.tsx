@@ -7,6 +7,7 @@ import {
   Settings,
   Plus,
   Terminal,
+  Sparkles,
 } from 'lucide-react';
 import { SidebarTab } from '../types/roblox';
 
@@ -35,6 +36,7 @@ export const VSActivityBar: React.FC<Props> = ({
     { id: 'explorer', label: 'Explorer (Files & Rojo Folders)', icon: FolderTree },
     { id: 'projects', label: 'Projects & Templates', icon: FolderKanban },
     { id: 'debugger', label: 'Roblox Luau Debugger & Bugs', icon: Bug, badge: issueCount },
+    { id: 'assistant', label: 'AI Assistant (your own API key)', icon: Sparkles },
   ];
 
   return (
@@ -63,13 +65,13 @@ export const VSActivityBar: React.FC<Props> = ({
               }`}
             >
               {isActive && (
-                <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-red-500 rounded-r" />
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-zinc-500 rounded-r" />
               )}
               <Icon className={`w-4 h-4 ${item.color || ''}`} />
 
               {/* Badge for issues or notifications */}
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border border-[#090b10]">
+                <span className="absolute -top-1 -right-1 px-1 min-w-[16px] h-4 rounded-full bg-zinc-500 text-white text-[9px] font-bold flex items-center justify-center border border-[#090b10]">
                   {item.badge}
                 </span>
               )}

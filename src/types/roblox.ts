@@ -10,6 +10,8 @@ export interface RobloxIssue {
   description: string;
   robloxGotcha: string;
   suggestedFix: string;
+  /** 'line-replace' = suggestedFix replaces `line` verbatim; 'append' = append to end of file. */
+  fixKind?: 'line-replace' | 'append' | 'manual';
 }
 
 export interface AnalysisResult {
@@ -71,7 +73,7 @@ export interface RobloxProject {
   files: ScriptFile[];
 }
 
-export type SidebarTab = 'explorer' | 'search' | 'debugger' | 'projects' | 'settings';
+export type SidebarTab = 'explorer' | 'search' | 'debugger' | 'projects' | 'settings' | 'assistant';
 
 export type MobileTab = 'editor' | 'debugger' | 'console' | 'explorer' | 'wiring';
 
