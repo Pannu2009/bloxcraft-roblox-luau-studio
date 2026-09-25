@@ -15,6 +15,10 @@ jobs:
   build-apk:
     name: Build & Package Android APK
     runs-on: ubuntu-latest
+    env:
+      # AI token for the Gemini backend. The value lives in the repo's
+      # Actions secrets as GEMINI_API_KEY (set after first release).
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout Repository
@@ -23,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Node Dependencies
         run: npm install --legacy-peer-deps
@@ -52,7 +56,7 @@ jobs:
           mkdir -p android/app/src/main/assets/public
           cp -r dist/* android/app/src/main/assets/public/
           cp capacitor.config.json android/app/src/main/assets/capacitor.config.json 2>/dev/null || true
-          npx cap sync android || true
+          npx cap sync android
 
       - name: Grant Execute Permission to Gradle
         run: chmod +x android/gradlew
