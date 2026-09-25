@@ -470,6 +470,10 @@ export default function App() {
               onCloseSidebar={() => setIsSidebarOpen(false)}
               fontSize={editorFontSize}
               onChangeFontSize={setEditorFontSize}
+              onSelectTab={(tab) => {
+                setActiveSidebarTab(tab);
+                setIsSidebarOpen(true);
+              }}
             />
           </div>
         )}
